@@ -27,8 +27,6 @@ class OrderSpec(_system: ActorSystem) extends TestKit(_system)
 
       order ! CreateOrder("1", "client1")
       expectMsg("accepted")
-      order ! CreateOrder("1", "client1")
-      expectMsg("accepted")
     }
 
   }
