@@ -57,7 +57,6 @@ class Order extends AggregateRoot[State] with EventsourcedProcessor with ActorLo
           persist(OrderCreated(orderId, clientId)) { event =>
             apply(event)
             log.info("Order created: {}", orderId)
-            sender() ! "accepted"
           }
         }
       case AddProduct(orderId, productId, quantity) =>

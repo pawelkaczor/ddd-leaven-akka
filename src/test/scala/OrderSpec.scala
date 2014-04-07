@@ -1,21 +1,25 @@
 import akka.actor.{Props, ActorSystem}
 import akka.testkit.{EventFilter, TestKit, ImplicitSender}
 import com.typesafe.config.ConfigFactory
-import erp.sales.domain.order.Order
-import Order.CreateOrder
+import ddd.domain.event.DomainEvent
+import erp.sales.domain.order.Order.{OrderCreated, CreateOrder}
 import erp.sales.domain.order.Order
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
-class OrderSpec(_system: ActorSystem) extends TestKit(_system)
-  with ImplicitSender with WordSpecLike with Matchers with BeforeAndAfterAll {
+import OrderSpec._
 
+object OrderSpec {
   val testSystem = {
     val config = ConfigFactory.parseString(
-      """akka.event-handlers = ["akka.testkit.TestEventListener"]""")
+      """akka.loggers = ["akka.testkit.TestEventListener"]
+        |akka.persistence.journal.plugin = "in-memory-journal"
+      """.stripMargin)
     ActorSystem("OrderSpec", config)
   }
-  //def this() = this(testSystem)
-  def this() = this(ActorSystem("OrderSpec"))
+}
+
+class OrderSpec extends TestKit(testSystem)
+  with ImplicitSender with WordSpecLike with Matchers with BeforeAndAfterAll {
 
   override def afterAll {
     TestKit.shutdownActorSystem(system)
@@ -23,11 +27,20 @@ class OrderSpec(_system: ActorSystem) extends TestKit(_system)
 
   "An Order actor" must {
     "accept CreateOrder" in {
-      val order = system.actorOf(Props[Order], name = "order6")
+      val order = system.actorOf(Props[Order], name = "order")
 
-      order ! CreateOrder("1", "client1")
-      expectMsg("accepted")
+      expectEvent(classOf[OrderCreated]) {
+        order ! CreateOrder("order1", "client1")
+      }
+
     }
+  }
 
+  def expectEvent[T <: DomainEvent](event: Class[T])(when: Unit) {
+    val eventAppliedMsg = ".+" + event.getSimpleName
+    EventFilter.info(
+      source = "akka://OrderSpec/user/order", pattern = eventAppliedMsg, occurrences = 1).intercept {
+      when
+    }
   }
 }

@@ -13,7 +13,6 @@ trait AggregateRoot[S <: AggregateState] {
   var state: Option[AggregateState] = None
 
   def apply(event: DomainEvent)(implicit factory: AggregateRootCreated => Option[S]): S = {
-    log.info("Applying event: {}", event.getClass.getSimpleName)
     state = event match {
       case AggregateRootCreated(_) =>
         factory.apply(event.asInstanceOf[AggregateRootCreated])
