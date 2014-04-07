@@ -3,7 +3,7 @@ package erp.sales.domain.order
 import akka.actor._
 import akka.persistence._
 import ddd.domain.sharedkernel.Money
-import ddd.domain.{AggregateState, AggregateRoot, DomainEntity}
+import ddd.domain.{AggregateState, AggregateRoot}
 import erp.sales.domain.policies.rebate.Rebates.RebatePolicy
 import java.sql.Timestamp
 import erp.sales.domain.ProductType.ProductType
@@ -36,16 +36,14 @@ object Order {
 
 }
 
-class Order extends AggregateRoot[State] with EventsourcedProcessor with ActorLogging {
+class Order extends AggregateRoot[Event, State] with EventsourcedProcessor with ActorLogging {
 
-  implicit def initialize(event: AggregateRootCreated) =
-    event match {
-      case OrderCreated(_, clientId) => Option(State(clientId, Draft, Money(0), List.empty, None))
-      case _ => None
-    }
+  implicit val factory: AggregateRootFactory = {
+    case OrderCreated(_, clientId) => State(clientId, Draft, Money(0), List.empty, None)
+  }
 
   override def receiveRecover: Receive = {
-    case evt: DomainEvent => apply(evt)
+    case evt: Event => apply(evt)
   }
 
   override def receiveCommand: Receive = {
@@ -60,7 +58,7 @@ class Order extends AggregateRoot[State] with EventsourcedProcessor with ActorLo
           }
         }
       case AddProduct(orderId, productId, quantity) =>
-          if (getState.status ne Draft) {
+          if (state.status ne Draft) {
             throw new OrderOperationException(s"Order $orderId already submitted", orderId)
           } else {
             // TODO fetch product detail
@@ -82,11 +80,12 @@ case class State (
     totalCost: Money,
     items: List[OrderLine],
     submitDate: Option[Timestamp])
-  extends AggregateState {
+  extends AggregateState[Event] {
 
-  def apply(event: DomainEvent): State = event match {
+  override def apply = {
+
     case event @ ProductAddedToOrder(productId, _, _, price, quantity) =>
-      val policy: Rebates.RebatePolicy = standardRebate(5, 10)
+      val policy = standardRebate(5, 10)
       val newItems = items.find(item => item.id == productId) match {
         case Some(orderLine) =>
           val index = items.indexOf(orderLine)
@@ -95,6 +94,9 @@ case class State (
           OrderLine(OrderProduct(event), quantity, policy) :: items
       }
       copy(items = newItems).recalculate(policy)
+
+    case OrderArchived(_) =>
+      copy(status = Archived)
   }
 
   private def recalculate(policy: RebatePolicy): State = {

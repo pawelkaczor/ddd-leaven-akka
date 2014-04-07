@@ -21,26 +21,26 @@ object OrderSpec {
 class OrderSpec extends TestKit(testSystem)
   with ImplicitSender with WordSpecLike with Matchers with BeforeAndAfterAll {
 
-  override def afterAll {
+  override def afterAll() {
     TestKit.shutdownActorSystem(system)
   }
 
   "An Order actor" must {
     "accept CreateOrder" in {
       val order = system.actorOf(Props[Order], name = "order")
-
       expectEvent(classOf[OrderCreated]) {
         order ! CreateOrder("order1", "client1")
       }
-
     }
   }
 
-  def expectEvent[T <: DomainEvent](event: Class[T])(when: Unit) {
-    val eventAppliedMsg = ".+" + event.getSimpleName
+  def expectEvent[T <: DomainEvent](eventClass: Class[T])(when: Unit) {
+    val eventAppliedMsg = ".+" + eventClass.getSimpleName
     EventFilter.info(
-      source = "akka://OrderSpec/user/order", pattern = eventAppliedMsg, occurrences = 1).intercept {
-      when
+      source = "akka://OrderSpec/user/order",
+      pattern = eventAppliedMsg, occurrences = 1)
+      .intercept {
+        when
     }
   }
 }

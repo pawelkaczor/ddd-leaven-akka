@@ -1,28 +1,30 @@
 package ddd.domain
 
 import akka.actor.ActorLogging
-import ddd.domain.event.{AggregateRootCreated, DomainEvent}
+import ddd.domain.event.DomainEvent
 
-trait AggregateState {
-  def apply(event: DomainEvent): AggregateState
+trait AggregateState[E <: DomainEvent] {
+  type StateMachine = PartialFunction[E, AggregateState[E]]
+  def apply: StateMachine
 }
 
-trait AggregateRoot[S <: AggregateState] {
+trait AggregateRoot[E <: DomainEvent, S <: AggregateState[E]] {
   this: ActorLogging =>
+  var stateOpt: Option[AggregateState[E]] = None
 
-  var state: Option[AggregateState] = None
+  type AggregateRootFactory = PartialFunction[E, S]
 
-  def apply(event: DomainEvent)(implicit factory: AggregateRootCreated => Option[S]): S = {
-    state = event match {
-      case AggregateRootCreated(_) =>
-        factory.apply(event.asInstanceOf[AggregateRootCreated])
-      case _ => Option(state.get.apply(event))
+  def apply(event: E)(implicit factory: AggregateRootFactory): S = {
+    stateOpt = if (!created && factory.isDefinedAt(event)) {
+      Option(factory.apply(event))
+    } else {
+      Option(state.apply(event))
     }
     log.info("Event applied: {}", event.getClass.getSimpleName)
-    getState
+    state
   }
 
-  def getState = if (created) state.get.asInstanceOf[S] else throw new RuntimeException("Aggregate root has not been yet created.")
+  def state = if (created) stateOpt.get.asInstanceOf[S] else throw new RuntimeException("Aggregate root has not been yet created.")
 
-  def created = state.isDefined
+  def created = stateOpt.isDefined
 }
