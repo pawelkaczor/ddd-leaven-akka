@@ -6,9 +6,8 @@ import ddd.domain.sharedkernel.Money
 import ddd.domain.{AggregateState, AggregateRoot}
 import erp.sales.domain.policies.rebate.Rebates.RebatePolicy
 import java.sql.Timestamp
-import erp.sales.domain.ProductType.ProductType
-import erp.sales.domain.policies.rebate.{standardRebate, Rebates}
-import ddd.domain.event.{AggregateRootCreated, DomainEvent}
+import erp.sales.domain.policies.rebate.standardRebate
+import ddd.domain.event.DomainEvent
 import OrderStatus._
 import erp.sales.domain.order.Order._
 import scala.Some
@@ -23,6 +22,7 @@ object Order {
   sealed trait Command { def orderId: String }
   case class CreateOrder(orderId: String, clientId: String) extends Command
   case class AddProduct(orderId: String, productId: String, quantity: Int) extends Command
+  case class ArchiveOrder(orderId: String) extends Command
 
   // Events
   case class OrderCreated(id: String, clientId: String) extends DomainEvent
@@ -59,19 +59,23 @@ class Order extends AggregateRoot[State] with EventsourcedProcessor with ActorLo
           }
         }
       case AddProduct(orderId, productId, quantity) =>
-          if (state.status ne Draft) {
-            throw new OrderOperationException(s"Order $orderId already submitted", orderId)
-          } else {
-            // TODO fetch product detail
-            // TODO fetch price for the client
+        if (state.status ne Draft) {
+          throw new OrderOperationException(s"Order $orderId already submitted", orderId)
+        } else {
+          // TODO fetch product detail
+          // TODO fetch price for the client
 
-            persist(ProductAddedToOrder(productId, orderId, productType = ProductType.Standard, price = Money(10), quantity)) { event =>
-              apply(event)
-              log.info("Product {} added to order: {}", productId, orderId)
-            }
+          persist(ProductAddedToOrder(productId, orderId, productType = ProductType.Standard, price = Money(10), quantity)) { event =>
+            apply(event)
+            log.info("Product {} added to order: {}", productId, orderId)
           }
+        }
+      case ArchiveOrder(orderId) =>
+        persist(OrderArchived(orderId)) { event =>
+          apply(event)
+          log.info("Order archived: {}", orderId)
+        }
     }
-    case ReceiveTimeout => context stop self
   }
 
 }

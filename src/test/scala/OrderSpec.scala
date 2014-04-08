@@ -1,10 +1,13 @@
-import akka.actor.{Props, ActorSystem}
-import akka.testkit.{EventFilter, TestKit, ImplicitSender}
+import akka.actor.{PoisonPill, Props, ActorSystem}
 import com.typesafe.config.ConfigFactory
-import ddd.domain.event.DomainEvent
-import erp.sales.domain.order.Order.{AddProduct, ProductAddedToOrder, OrderCreated, CreateOrder}
+import ddd.domain.sharedkernel.Money
+import erp.sales.domain.order.Order._
 import erp.sales.domain.order.Order
-import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
+import erp.sales.domain.order.Order.AddProduct
+import erp.sales.domain.order.Order.CreateOrder
+import erp.sales.domain.order.Order.OrderCreated
+import erp.sales.domain.order.Order.ProductAddedToOrder
+import erp.sales.domain.ProductType
 
 import OrderSpec._
 
@@ -18,32 +21,40 @@ object OrderSpec {
   }
 }
 
-class OrderSpec extends TestKit(testSystem)
-  with ImplicitSender with WordSpecLike with Matchers with BeforeAndAfterAll {
+class OrderSpec extends EventsourcedAggregateRootSpec(testSystem) {
 
-  override def afterAll() {
-    TestKit.shutdownActorSystem(system)
+  override val aggregateRootId = "order1"
+
+  def getOrderActor(name: String) = {
+    getActor(Props[Order])(name)
   }
 
   "An Order actor" must {
-    "accept CreateOrder" in {
-      val order = system.actorOf(Props[Order], name = "order")
-      expectEvent(classOf[OrderCreated]) {
-        order ! CreateOrder("order1", "client1")
+    "handle Order process" in {
+      val orderId = aggregateRootId
+      var order = getOrderActor(orderId)
+
+      expectEventLogged[OrderCreated] {
+        order ! CreateOrder(orderId, "client1")
       }
-      expectEvent(classOf[ProductAddedToOrder]) {
-        order ! AddProduct("order1", "product1", 1)
+      expectEventLogged[ProductAddedToOrder] {
+        order ! AddProduct(orderId, "product1", 1)
       }
+
+      // kill and recreate order actor
+      order ! PoisonPill
+      Thread.sleep(1000)
+      order = getOrderActor(orderId)
+
+      expectEventLogged(ProductAddedToOrder("product2", orderId, ProductType.Standard, Money(10), 2)) {
+        order ! AddProduct(orderId, "product2", 2)
+      }
+
+      expectEventLogged[OrderArchived] {
+        order ! ArchiveOrder(orderId)
+      }
+
     }
   }
 
-  def expectEvent[T <: DomainEvent](eventClass: Class[T])(when: Unit) {
-    val eventAppliedMsg = ".+" + eventClass.getSimpleName
-    EventFilter.info(
-      source = "akka://OrderSpec/user/order",
-      pattern = eventAppliedMsg, occurrences = 1)
-      .intercept {
-        when
-    }
-  }
 }

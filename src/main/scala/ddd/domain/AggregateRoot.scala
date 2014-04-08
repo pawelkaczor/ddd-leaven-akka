@@ -19,7 +19,7 @@ trait AggregateRoot[S <: AggregateState] {
       factory.apply(event)
     else
       state.apply(event)
-    log.info("Event applied: {}", event.getClass.getSimpleName)
+    log.info("Event applied: {}", event)
     stateOpt = Option(nextState.asInstanceOf[S])
     state
   }
