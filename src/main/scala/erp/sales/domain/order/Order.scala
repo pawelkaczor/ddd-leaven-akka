@@ -15,6 +15,8 @@ import scala.Some
 import erp.sales.domain.order.Order.ProductAddedToOrder
 import erp.sales.domain.order.Order.CreateOrder
 import erp.sales.domain.order.errors.{OrderOperationException, OrderCreationException}
+import erp.sales.domain.ProductType
+import erp.sales.domain.ProductType.ProductType
 
 object Order {
   // Commands
@@ -23,27 +25,26 @@ object Order {
   case class AddProduct(orderId: String, productId: String, quantity: Int) extends Command
 
   // Events
-  sealed trait Event extends DomainEvent
-  case class OrderCreated(override val id: String, clientId: String) extends AggregateRootCreated(id) with Event
+  case class OrderCreated(id: String, clientId: String) extends DomainEvent
   case class ProductAddedToOrder(
       productId: String,
       orderId: String,
       productType: ProductType,
       price: Money,
       quantity: Int)
-    extends Event
-  case class OrderArchived(id: String) extends Event
+    extends DomainEvent
+  case class OrderArchived(id: String) extends DomainEvent
 
 }
 
-class Order extends AggregateRoot[Event, State] with EventsourcedProcessor with ActorLogging {
+class Order extends AggregateRoot[State] with EventsourcedProcessor with ActorLogging {
 
   implicit val factory: AggregateRootFactory = {
     case OrderCreated(_, clientId) => State(clientId, Draft, Money(0), List.empty, None)
   }
 
   override def receiveRecover: Receive = {
-    case evt: Event => apply(evt)
+    case evt: DomainEvent => apply(evt)
   }
 
   override def receiveCommand: Receive = {
@@ -63,7 +64,8 @@ class Order extends AggregateRoot[Event, State] with EventsourcedProcessor with 
           } else {
             // TODO fetch product detail
             // TODO fetch price for the client
-            persist(ProductAddedToOrder(productId, orderId, productType = null, price = null, quantity)) { event =>
+
+            persist(ProductAddedToOrder(productId, orderId, productType = ProductType.Standard, price = Money(10), quantity)) { event =>
               apply(event)
               log.info("Product {} added to order: {}", productId, orderId)
             }
@@ -80,7 +82,7 @@ case class State (
     totalCost: Money,
     items: List[OrderLine],
     submitDate: Option[Timestamp])
-  extends AggregateState[Event] {
+  extends AggregateState {
 
   override def apply = {
 

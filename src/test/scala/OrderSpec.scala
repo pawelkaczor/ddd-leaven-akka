@@ -2,7 +2,7 @@ import akka.actor.{Props, ActorSystem}
 import akka.testkit.{EventFilter, TestKit, ImplicitSender}
 import com.typesafe.config.ConfigFactory
 import ddd.domain.event.DomainEvent
-import erp.sales.domain.order.Order.{OrderCreated, CreateOrder}
+import erp.sales.domain.order.Order.{AddProduct, ProductAddedToOrder, OrderCreated, CreateOrder}
 import erp.sales.domain.order.Order
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
@@ -30,6 +30,9 @@ class OrderSpec extends TestKit(testSystem)
       val order = system.actorOf(Props[Order], name = "order")
       expectEvent(classOf[OrderCreated]) {
         order ! CreateOrder("order1", "client1")
+      }
+      expectEvent(classOf[ProductAddedToOrder]) {
+        order ! AddProduct("order1", "product1", 1)
       }
     }
   }
