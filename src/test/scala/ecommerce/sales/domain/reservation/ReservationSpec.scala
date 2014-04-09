@@ -48,10 +48,10 @@ class ReservationSpec extends EventsourcedAggregateRootSpec(testSystem) {
       Thread.sleep(1000)
       reservation = getReservationActor(reservationId)
 
-      val product = ProductData("product2", "productName", ProductType.Standard, Money(10))
-      val quantity= 2
-      expectEventLogged(ProductReserved(reservationId, product, quantity)) {
-        reservation ! ReserveProduct(reservationId, "product2", 2)
+      val product2 = ProductData("product2", "productName", ProductType.Standard, Money(10))
+      val quantity= 1
+      expectEventLogged(ProductReserved(reservationId, product2, quantity)) {
+        reservation ! ReserveProduct(reservationId, "product2", quantity)
       }
 
       expectEventLogged[ReservationClosed] {
