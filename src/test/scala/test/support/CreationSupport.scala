@@ -1,3 +1,5 @@
+package test.support
+
 import akka.actor.{ActorContext, Props, ActorRef}
 
 trait CreationSupport {

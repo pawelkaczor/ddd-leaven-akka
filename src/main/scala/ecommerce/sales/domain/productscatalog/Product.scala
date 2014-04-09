@@ -1,11 +1,10 @@
 package ecommerce.sales.domain.productscatalog
 
-import ddd.domain.sharedkernel.Money
 import ecommerce.sales.domain.productscatalog.ProductType.ProductType
-import ddd.domain.{AggregateState, AggregateRoot}
 import akka.actor.ActorLogging
 import akka.persistence.EventsourcedProcessor
-import ddd.domain.event.DomainEvent
+import ecommerce.sales.sharedkernel.Money
+import ddd.support.domain.{AggregateState, AggregateRoot}
 
 class Product extends AggregateRoot[ProductState] with EventsourcedProcessor with ActorLogging {
 

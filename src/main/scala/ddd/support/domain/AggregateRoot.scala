@@ -1,7 +1,7 @@
-package ddd.domain
+package ddd.support.domain
 
 import akka.actor.ActorLogging
-import ddd.domain.event.DomainEvent
+import ddd.support.domain.event.DomainEvent
 
 trait AggregateState {
   type StateMachine = PartialFunction[DomainEvent, AggregateState]

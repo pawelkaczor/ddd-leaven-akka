@@ -1,6 +1,6 @@
 package ecommerce.sales.domain.offer.discounts
 
-import ddd.domain.sharedkernel.Money
+import ecommerce.sales.sharedkernel.Money
 
 object StandardDiscount extends ((Double, Int) => Discounts.DiscountPolicy) {
 

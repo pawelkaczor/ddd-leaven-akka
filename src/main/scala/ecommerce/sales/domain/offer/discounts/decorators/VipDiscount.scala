@@ -1,8 +1,8 @@
 package ecommerce.sales.domain.offer.discounts.decorators
 
-import ddd.domain.sharedkernel.Money
 import ecommerce.sales.domain.offer.discounts.Discounts
 import Discounts.DiscountPolicy
+import ecommerce.sales.sharedkernel.Money
 
 object VipDiscount extends ((Money, Money) => Option[DiscountPolicy] => DiscountPolicy) {
 

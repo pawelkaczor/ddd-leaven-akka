@@ -1,4 +1,4 @@
-package ddd.domain
+package ddd.support.domain
 
 trait DomainEntity {
   def id: String

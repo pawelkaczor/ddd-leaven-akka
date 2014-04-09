@@ -2,9 +2,7 @@ package ecommerce.sales.domain.reservation
 
 import akka.actor._
 import akka.persistence._
-import ddd.domain.sharedkernel.Money
-import ddd.domain.{AggregateState, AggregateRoot}
-import ddd.domain.event.DomainEvent
+import ddd.support.domain.event.DomainEvent
 import ReservationStatus._
 import ecommerce.sales.domain.reservation.Reservation._
 import scala.Some
@@ -13,6 +11,8 @@ import ecommerce.sales.domain.reservation.Reservation.CreateReservation
 import ecommerce.sales.domain.reservation.errors.{ReservationOperationException, ReservationCreationException}
 import ecommerce.sales.domain.productscatalog.{ProductData, ProductType}
 import java.util.Date
+import ecommerce.sales.sharedkernel.Money
+import ddd.support.domain.{AggregateState, AggregateRoot}
 
 /**
  * Reservation is just a "wish list". System can not guarantee that user can buy desired products.</br>

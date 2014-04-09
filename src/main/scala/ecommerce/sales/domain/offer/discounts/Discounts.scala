@@ -1,8 +1,8 @@
 package ecommerce.sales.domain.offer.discounts
 
-import ddd.domain.sharedkernel.Money
 import ecommerce.sales.domain.productscatalog.ProductData
 import ecommerce.sales.domain.client.Client
+import ecommerce.sales.sharedkernel.Money
 
 object Discounts {
   type Quantity = Int

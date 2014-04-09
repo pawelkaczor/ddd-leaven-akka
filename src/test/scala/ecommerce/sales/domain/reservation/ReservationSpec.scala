@@ -1,15 +1,17 @@
+package ecommerce.sales.domain.reservation
+
 import akka.actor.{PoisonPill, Props, ActorSystem}
 import com.typesafe.config.ConfigFactory
 import ecommerce.sales.domain.productscatalog.{ProductData, ProductType}
-import ddd.domain.sharedkernel.Money
 import ecommerce.sales.domain.reservation.Reservation._
-import ecommerce.sales.domain.reservation.Reservation
 import ecommerce.sales.domain.reservation.Reservation.ReserveProduct
 import ecommerce.sales.domain.reservation.Reservation.CreateReservation
 import ecommerce.sales.domain.reservation.Reservation.ReservationCreated
 import ecommerce.sales.domain.reservation.Reservation.ProductReserved
 
 import ReservationSpec._
+import ecommerce.sales.sharedkernel.Money
+import test.support.EventsourcedAggregateRootSpec
 
 object ReservationSpec {
   val testSystem = {

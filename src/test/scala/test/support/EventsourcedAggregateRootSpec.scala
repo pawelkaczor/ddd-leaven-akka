@@ -1,7 +1,9 @@
+package test.support
+
 import akka.actor._
 import akka.testkit.{EventFilter, ImplicitSender, TestKit}
 import akka.util.Timeout
-import ddd.domain.event.DomainEvent
+import ddd.support.domain.event.DomainEvent
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 import scala.concurrent.Await
 

@@ -1,8 +1,8 @@
 package ecommerce.sales.domain.reservation
 
-import ddd.domain.DomainEntity
 import ecommerce.sales.domain.productscatalog.ProductData
 import java.util.UUID
+import ddd.support.domain.DomainEntity
 
 case class ReservationItem(product: ProductData, quantity: Int) extends DomainEntity {
 

@@ -1,4 +1,4 @@
-package ddd.domain.sharedkernel
+package ecommerce.sales.sharedkernel
 
 import java.util.Currency
 import java.lang.String
