@@ -1,4 +1,4 @@
-package erp.sales.domain
+package ecommerce.sales.domain.productscatalog
 
 object ProductType extends Enumeration {
   type ProductType = Value

@@ -13,7 +13,7 @@ abstract class EventsourcedAggregateRootSpec(_system: ActorSystem) extends TestK
   val parentName = "parent"
   val parent: ActorRef = system.actorOf(Props(new Actor with ActorContextCreationSupport {
     def receive = {
-      case ("getOrCreate", props:Props, name:String) => sender() ! getOrCreateChild(props, name)
+      case ("getOrCreateChild", props:Props, name:String) => sender() ! getOrCreateChild(props, name)
     }
   }), name = parentName)
 
@@ -26,7 +26,7 @@ abstract class EventsourcedAggregateRootSpec(_system: ActorSystem) extends TestK
 
   def getActor(props:Props)(implicit name: String = aggregateRootId): ActorRef = {
     implicit val timeout = Timeout(5, SECONDS)
-    Await.result(parent ? ("getOrCreate", props, name), 5 seconds).asInstanceOf[ActorRef]
+    Await.result(parent ? ("getOrCreateChild", props, name), 5 seconds).asInstanceOf[ActorRef]
   }
 
   def expectEventLogged[E <: DomainEvent](when: Unit)(implicit m: Manifest[E]) {
