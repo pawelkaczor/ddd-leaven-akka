@@ -2,29 +2,48 @@ package ddd.support.domain
 
 import akka.actor.ActorLogging
 import ddd.support.domain.event.DomainEvent
+import akka.persistence.EventsourcedProcessor
 
 trait AggregateState {
   type StateMachine = PartialFunction[DomainEvent, AggregateState]
   def apply: StateMachine
 }
 
-trait AggregateRoot[S <: AggregateState] {
-  this: ActorLogging =>
+trait AggregateRoot[S <: AggregateState] extends EventsourcedProcessor with ActorLogging {
 
   type AggregateRootFactory = PartialFunction[DomainEvent, S]
   private var stateOpt: Option[S] = None
 
-  def apply(event: DomainEvent)(implicit factory: AggregateRootFactory): S = {
-    val nextState = if (!created && factory.isDefinedAt(event))
-      factory.apply(event)
-    else
-      state.apply(event)
-    log.info("Event applied: {}", event)
-    stateOpt = Option(nextState.asInstanceOf[S])
-    state
+  val factory: AggregateRootFactory
+
+  override def receiveRecover: Receive = {
+    case evt: DomainEvent => updateState(evt)
   }
 
-  def state = if (created) stateOpt.get else throw new RuntimeException("Aggregate root does not exist.")
+  protected def state = if (created) stateOpt.get else throw new RuntimeException("Aggregate root does not exist")
+
+  private def updateState(event: DomainEvent) {
+    val nextState = if (created) state.apply(event) else factory.apply(event)
+    stateOpt = Option(nextState.asInstanceOf[S])
+    log.info("Event applied: {}", event)
+  }
+
+  def apply(event: DomainEvent) {
+    persist(event) {
+      persistedEvent => {
+        updateState(persistedEvent)
+        onPersisted(persistedEvent)
+      }
+    }
+  }
+
+  def onPersisted(event: DomainEvent) {
+    publish(event)
+  }
+
+  def publish(event: DomainEvent) {
+    context.system.eventStream.publish(event)
+  }
 
   def created = stateOpt.isDefined
 }

@@ -11,6 +11,8 @@ class Product extends AggregateRoot[ProductState] with EventsourcedProcessor wit
   override def receiveCommand: Product#Receive = ???
 
   override def receiveRecover: Product#Receive = ???
+
+  override val factory: AggregateRootFactory = ???
 }
 
 case class ProductState (

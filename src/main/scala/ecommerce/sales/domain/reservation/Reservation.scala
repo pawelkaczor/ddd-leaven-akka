@@ -34,14 +34,10 @@ object Reservation {
 
 }
 
-class Reservation extends AggregateRoot[State] with EventsourcedProcessor with ActorLogging {
+class Reservation extends AggregateRoot[State] {
 
-  implicit val factory: AggregateRootFactory = {
+  override val factory: AggregateRootFactory = {
     case ReservationCreated(_, clientId) => State(clientId, Opened, List.empty, new Date)
-  }
-
-  override def receiveRecover: Receive = {
-    case evt: DomainEvent => apply(evt)
   }
 
   override def receiveCommand: Receive = {
@@ -50,10 +46,7 @@ class Reservation extends AggregateRoot[State] with EventsourcedProcessor with A
         if (created) {
           throw new ReservationCreationException(s"Reservation $reservationId already exists")
         } else {
-          persist(ReservationCreated(reservationId, clientId)) { event =>
-            apply(event)
-            log.info("Reservation created: {}", reservationId)
-          }
+          apply(ReservationCreated(reservationId, clientId))
         }
       case ReserveProduct(reservationId, productId, quantity) =>
         if (state.status eq Closed) {
@@ -62,19 +55,12 @@ class Reservation extends AggregateRoot[State] with EventsourcedProcessor with A
           // TODO fetch product detail
           // TODO fetch price for the client
           val product = ProductData(productId, "productName", ProductType.Standard, Money(10))
-          persist(ProductReserved(reservationId, product, quantity)) { event =>
-            apply(event)
-            log.info("Product {} reserved", productId)
-          }
+          apply(ProductReserved(reservationId, product, quantity))
         }
       case CloseReservation(reservationId) =>
-        persist(ReservationClosed(reservationId)) { event =>
-          apply(event)
-          log.info("Reservation closed: {}", reservationId)
-        }
+        apply(ReservationClosed(reservationId))
     }
   }
-
 }
 
 case class State (
