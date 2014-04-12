@@ -37,17 +37,20 @@ object Reservation {
 class Reservation extends AggregateRoot[State] {
 
   override val factory: AggregateRootFactory = {
-    case ReservationCreated(_, clientId) => State(clientId, Opened, List.empty, new Date)
+    case ReservationCreated(_, clientId) =>
+      State(clientId, Opened, items = List.empty, createDate = new Date)
   }
 
   override def receiveCommand: Receive = {
     case cmd: Command => cmd match {
+
       case CreateReservation(reservationId, clientId) =>
         if (created) {
           throw new ReservationCreationException(s"Reservation $reservationId already exists")
         } else {
           apply(ReservationCreated(reservationId, clientId))
         }
+
       case ReserveProduct(reservationId, productId, quantity) =>
         if (state.status eq Closed) {
           throw new ReservationOperationException(s"Reservation $reservationId is closed", reservationId)
@@ -55,8 +58,11 @@ class Reservation extends AggregateRoot[State] {
           // TODO fetch product detail
           // TODO fetch price for the client
           val product = ProductData(productId, "productName", ProductType.Standard, Money(10))
-          apply(ProductReserved(reservationId, product, quantity))
+          apply(ProductReserved(reservationId, product, quantity)) { event =>
+            // customized handling of ProductReserved
+          }
         }
+
       case CloseReservation(reservationId) =>
         apply(ReservationClosed(reservationId))
     }

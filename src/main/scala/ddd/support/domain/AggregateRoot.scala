@@ -12,6 +12,7 @@ trait AggregateState {
 trait AggregateRoot[S <: AggregateState] extends EventsourcedProcessor with ActorLogging {
 
   type AggregateRootFactory = PartialFunction[DomainEvent, S]
+  type EventHandler = DomainEvent => Unit
   private var stateOpt: Option[S] = None
 
   val factory: AggregateRootFactory
@@ -28,17 +29,13 @@ trait AggregateRoot[S <: AggregateState] extends EventsourcedProcessor with Acto
     log.info("Event applied: {}", event)
   }
 
-  def apply(event: DomainEvent) {
+  def apply(event: DomainEvent)(implicit handler: EventHandler = publish) {
     persist(event) {
       persistedEvent => {
         updateState(persistedEvent)
-        onPersisted(persistedEvent)
+        handler(persistedEvent)
       }
     }
-  }
-
-  def onPersisted(event: DomainEvent) {
-    publish(event)
   }
 
   def publish(event: DomainEvent) {
