@@ -31,21 +31,21 @@ abstract class EventsourcedAggregateRootSpec(_system: ActorSystem) extends TestK
     Await.result(parent ? ("getOrCreateChild", props, name), 5 seconds).asInstanceOf[ActorRef]
   }
 
-  def expectEventLogged[E <: DomainEvent](when: Unit)(implicit m: Manifest[E]) {
-    val eventAppliedMsg = "Event applied: " + m.runtimeClass.getSimpleName
+  def expectEventPersisted[E <: DomainEvent](when: Unit)(implicit m: Manifest[E]) {
+    val eventPersistedMsg = "Event persisted: " + m.runtimeClass.getSimpleName
     EventFilter.info(
       source = s"akka://OrderSpec/user/$parentName/$aggregateRootId",
-      start = eventAppliedMsg, occurrences = 1)
+      start = eventPersistedMsg, occurrences = 1)
       .intercept {
       when
     }
   }
 
-  def expectEventLogged[E <: DomainEvent](event: E)(when: Unit) {
-    val eventAppliedMsg = "Event applied: " + event.toString
+  def expectEventPersisted[E <: DomainEvent](event: E)(when: Unit) {
+    val eventPersistedMsg = "Event persisted: " + event.toString
     EventFilter.info(
       source = s"akka://OrderSpec/user/$parentName/$aggregateRootId",
-      start = eventAppliedMsg, occurrences = 1)
+      start = eventPersistedMsg, occurrences = 1)
       .intercept {
       when
     }

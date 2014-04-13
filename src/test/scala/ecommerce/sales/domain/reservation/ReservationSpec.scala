@@ -36,10 +36,10 @@ class ReservationSpec extends EventsourcedAggregateRootSpec(testSystem) {
       val reservationId = aggregateRootId
       var reservation = getReservationActor(reservationId)
 
-      expectEventLogged[ReservationCreated] {
+      expectEventPersisted[ReservationCreated] {
         reservation ! CreateReservation(reservationId, "client1")
       }
-      expectEventLogged[ProductReserved] {
+      expectEventPersisted[ProductReserved] {
         reservation ! ReserveProduct(reservationId, "product1", 1)
       }
 
@@ -50,11 +50,11 @@ class ReservationSpec extends EventsourcedAggregateRootSpec(testSystem) {
 
       val product2 = ProductData("product2", "productName", ProductType.Standard, Money(10))
       val quantity= 1
-      expectEventLogged(ProductReserved(reservationId, product2, quantity)) {
+      expectEventPersisted(ProductReserved(reservationId, product2, quantity)) {
         reservation ! ReserveProduct(reservationId, "product2", quantity)
       }
 
-      expectEventLogged[ReservationClosed] {
+      expectEventPersisted[ReservationClosed] {
         reservation ! CloseReservation(reservationId)
       }
 

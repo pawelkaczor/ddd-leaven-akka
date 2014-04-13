@@ -21,17 +21,15 @@ trait AggregateRoot[S <: AggregateState] extends EventsourcedProcessor with Acto
     case evt: DomainEvent => updateState(evt)
   }
 
-  protected def state = if (created) stateOpt.get else throw new RuntimeException("Aggregate root does not exist")
-
   private def updateState(event: DomainEvent) {
-    val nextState = if (created) state.apply(event) else factory.apply(event)
+    val nextState = if (initialized) state.apply(event) else factory.apply(event)
     stateOpt = Option(nextState.asInstanceOf[S])
-    log.info("Event applied: {}", event)
   }
 
-  def apply(event: DomainEvent)(implicit handler: EventHandler = publish) {
+  def raise(event: DomainEvent)(implicit handler: EventHandler = publish) {
     persist(event) {
       persistedEvent => {
+        log.info("Event persisted: {}", event)
         updateState(persistedEvent)
         handler(persistedEvent)
       }
@@ -42,5 +40,8 @@ trait AggregateRoot[S <: AggregateState] extends EventsourcedProcessor with Acto
     context.system.eventStream.publish(event)
   }
 
-  def created = stateOpt.isDefined
+  def initialized = stateOpt.isDefined
+
+  protected def state = if (initialized) stateOpt.get else throw new RuntimeException("Aggregate root does not exist")
+
 }

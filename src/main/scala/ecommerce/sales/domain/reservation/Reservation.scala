@@ -1,7 +1,5 @@
 package ecommerce.sales.domain.reservation
 
-import akka.actor._
-import akka.persistence._
 import ddd.support.domain.event.DomainEvent
 import ReservationStatus._
 import ecommerce.sales.domain.reservation.Reservation._
@@ -45,10 +43,10 @@ class Reservation extends AggregateRoot[State] {
     case cmd: Command => cmd match {
 
       case CreateReservation(reservationId, clientId) =>
-        if (created) {
+        if (initialized) {
           throw new ReservationCreationException(s"Reservation $reservationId already exists")
         } else {
-          apply(ReservationCreated(reservationId, clientId))
+          raise(ReservationCreated(reservationId, clientId))
         }
 
       case ReserveProduct(reservationId, productId, quantity) =>
@@ -58,13 +56,13 @@ class Reservation extends AggregateRoot[State] {
           // TODO fetch product detail
           // TODO fetch price for the client
           val product = ProductData(productId, "productName", ProductType.Standard, Money(10))
-          apply(ProductReserved(reservationId, product, quantity)) { event =>
+          raise(ProductReserved(reservationId, product, quantity)) { event =>
             // customized handling of ProductReserved
           }
         }
 
       case CloseReservation(reservationId) =>
-        apply(ReservationClosed(reservationId))
+        raise(ReservationClosed(reservationId))
     }
   }
 }
@@ -87,6 +85,7 @@ case class State (
           ReservationItem(product, quantity) :: items
       }
       copy(items = newItems)
+
     case ReservationClosed(_) => copy(status = Closed)
   }
 
