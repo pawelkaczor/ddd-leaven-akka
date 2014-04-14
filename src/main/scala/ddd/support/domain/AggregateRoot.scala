@@ -5,6 +5,7 @@ import ddd.support.domain.event.DomainEvent
 import akka.persistence.EventsourcedProcessor
 import ddd.support.domain.error.AggregateRootNotInitializedException
 import akka.actor.Status.Failure
+import ddd.support.domain.protocol.Ack
 
 trait AggregateState {
   type StateMachine = PartialFunction[DomainEvent, AggregateState]
@@ -28,7 +29,7 @@ trait AggregateRoot[S <: AggregateState] extends EventsourcedProcessor with Acto
     stateOpt = Option(nextState.asInstanceOf[S])
   }
 
-  def raise(event: DomainEvent)(implicit handler: EventHandler = publish) {
+  def raise(event: DomainEvent)(implicit handler: EventHandler = handle) {
     persist(event) {
       persistedEvent => {
         log.info("Event persisted: {}", event)
@@ -36,6 +37,11 @@ trait AggregateRoot[S <: AggregateState] extends EventsourcedProcessor with Acto
         handler(persistedEvent)
       }
     }
+  }
+
+  def handle(event: DomainEvent) {
+    publish(event)
+    sender() ! Ack
   }
 
   def publish(event: DomainEvent) {
