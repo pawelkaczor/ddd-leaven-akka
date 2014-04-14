@@ -1,5 +1,3 @@
 package ddd.support.domain.protocol
 
-object Ack {
-
-}
+case object Acknowledged
