@@ -3,6 +3,8 @@ package ddd.support.domain
 import akka.actor.ActorLogging
 import ddd.support.domain.event.DomainEvent
 import akka.persistence.EventsourcedProcessor
+import ddd.support.domain.error.AggregateRootNotInitializedException
+import akka.actor.Status.Failure
 
 trait AggregateState {
   type StateMachine = PartialFunction[DomainEvent, AggregateState]
@@ -42,6 +44,12 @@ trait AggregateRoot[S <: AggregateState] extends EventsourcedProcessor with Acto
 
   def initialized = stateOpt.isDefined
 
-  protected def state = if (initialized) stateOpt.get else throw new RuntimeException("Aggregate root does not exist")
+  protected def state = if (initialized) stateOpt.get else throw new AggregateRootNotInitializedException
+
+
+  override def preRestart(reason: Throwable, message: Option[Any]) {
+    sender() ! Failure(reason)
+    super.preRestart(reason, message)
+  }
 
 }

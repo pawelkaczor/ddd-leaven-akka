@@ -1,3 +1,6 @@
 package ecommerce.sales.domain.reservation.errors
 
-case class ReservationOperationException(message: String, reservationId: String) extends RuntimeException(message)
+import ddd.support.domain.error.DomainException
+
+case class ReservationOperationException(message: String, reservationId: String)
+  extends RuntimeException(message) with DomainException
