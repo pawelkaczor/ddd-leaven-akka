@@ -3,6 +3,7 @@ ddd-leaven-akka
 
 ## Goal
 Learn how to apply DDD/CQRS concepts on top of reactive platform.
+See Lessons page: https://github.com/pawelkaczor/ddd-leaven-akka/wiki/Lessons
 
 ### Notes
 Business logic has been taken from: https://github.com/BottegaIT/ddd-leaven-v2
