@@ -34,20 +34,17 @@ abstract class EventsourcedAggregateRootSpec(_system: ActorSystem) extends TestK
   }
 
   def expectEventPersisted[E <: DomainEvent](when: Unit)(implicit t: ClassTag[E]) {
-    val eventPersistedMsg = "Event persisted: " + t.runtimeClass.getSimpleName
-    EventFilter.info(
-      source = s"akka://OrderSpec/user/$parentName/$aggregateRootId",
-      start = eventPersistedMsg, occurrences = 1)
-      .intercept {
-      when
-    }
+    expectLogMessageFromAR("Event persisted: " + t.runtimeClass.getSimpleName, when)
   }
 
   def expectEventPersisted[E <: DomainEvent](event: E)(when: Unit) {
-    val eventPersistedMsg = "Event persisted: " + event.toString
+    expectLogMessageFromAR("Event persisted: " + event.toString, when)
+  }
+
+  def expectLogMessageFromAR(messageStart: String, when: Unit) {
     EventFilter.info(
       source = s"akka://OrderSpec/user/$parentName/$aggregateRootId",
-      start = eventPersistedMsg, occurrences = 1)
+      start = messageStart, occurrences = 1)
       .intercept {
       when
     }
@@ -58,7 +55,7 @@ abstract class EventsourcedAggregateRootSpec(_system: ActorSystem) extends TestK
     val future = Await.ready(awaitable, timeout.duration).asInstanceOf[Future[Any]]
     val futureValue = future.value.get
     futureValue match {
-      case Failure(ex) if ex.getClass.equals(t.runtimeClass) => println("ok")
+      case Failure(ex) if ex.getClass.equals(t.runtimeClass) => () //ok
       case x => fail(s"Unexpected result: $x")
     }
 
