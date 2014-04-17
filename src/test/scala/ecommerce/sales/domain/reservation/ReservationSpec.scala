@@ -9,20 +9,10 @@ import ecommerce.sales.domain.reservation.Reservation.CreateReservation
 import ecommerce.sales.domain.reservation.Reservation.ReservationCreated
 import ecommerce.sales.domain.reservation.Reservation.ProductReserved
 
-import ReservationSpec._
 import ecommerce.sales.sharedkernel.Money
 import test.support.EventsourcedAggregateRootSpec
 import ddd.support.domain.Representative._
-
-object ReservationSpec {
-  val testSystem = {
-    val config = ConfigFactory.parseString(
-      """akka.loggers = ["akka.testkit.TestEventListener"]
-        |akka.persistence.journal.plugin = "in-memory-journal"
-      """.stripMargin)
-    ActorSystem("OrderSpec", config)
-  }
-}
+import test.support.TestConfig._
 
 class ReservationSpec extends EventsourcedAggregateRootSpec[Reservation](testSystem) {
 

@@ -18,6 +18,7 @@ abstract class EventsourcedAggregateRootSpec[T](_system: ActorSystem) extends Te
 
   override def afterAll() {
     TestKit.shutdownActorSystem(system)
+    system.awaitTermination()
   }
 
   def expectEventPersisted[E <: DomainEvent](when: Unit)(implicit t: ClassTag[E], addressable: Addressable[T]) {
@@ -31,7 +32,7 @@ abstract class EventsourcedAggregateRootSpec[T](_system: ActorSystem) extends Te
   def expectLogMessageFromAR(messageStart: String, when: Unit)(implicit addressable: Addressable[T]) {
     val domain = addressable.domain
     EventFilter.info(
-      source = s"akka://OrderSpec/user/$domain/$aggregateRootId",
+      source = s"akka://Tests/user/$domain/$aggregateRootId",
       start = messageStart, occurrences = 1)
       .intercept {
       when

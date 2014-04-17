@@ -17,3 +17,5 @@ libraryDependencies ++= Seq(
   "com.github.michaelpisula" %% "akka-persistence-inmemory" % "0.1-SNAPSHOT"
   //"com.typesafe.akka" %% "akka-actor-tests" % akkaVersion % "test",
 )
+
+parallelExecution in ThisBuild := false
