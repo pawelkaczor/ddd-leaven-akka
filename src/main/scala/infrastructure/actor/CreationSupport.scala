@@ -1,4 +1,4 @@
-package test.support
+package infrastructure.actor
 
 import akka.actor.{ActorContext, Props, ActorRef}
 

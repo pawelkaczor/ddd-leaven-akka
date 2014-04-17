@@ -10,7 +10,7 @@ import ecommerce.sales.domain.reservation.errors.{ReservationOperationException,
 import ecommerce.sales.domain.productscatalog.{ProductData, ProductType}
 import java.util.Date
 import ecommerce.sales.sharedkernel.Money
-import ddd.support.domain.{AggregateState, AggregateRoot}
+import ddd.support.domain.{Addressable, AggregateState, AggregateRoot}
 
 /**
  * Reservation is just a "wish list". System can not guarantee that user can buy desired products.</br>
@@ -19,6 +19,16 @@ import ddd.support.domain.{AggregateState, AggregateRoot}
  *
  */
 object Reservation {
+
+  val domain: String = "reservation"
+
+  implicit object Addressable extends Addressable[Reservation] {
+    def getAddress = {
+      case cmd: Command => cmd.reservationId
+    }
+    override val domain: String = Reservation.domain
+  }
+
   // Commands
   sealed trait Command { def reservationId: String }
   case class CreateReservation(reservationId: String, clientId: String) extends Command

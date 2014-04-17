@@ -6,31 +6,18 @@ import akka.util.Timeout
 import ddd.support.domain.event.DomainEvent
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 import scala.concurrent.{Future, Await}
+import scala.concurrent.duration._
 import scala.util.Failure
 import scala.reflect.ClassTag
 
 abstract class EventsourcedAggregateRootSpec(_system: ActorSystem) extends TestKit(_system)
   with ImplicitSender with WordSpecLike with Matchers with BeforeAndAfterAll {
 
-  implicit val aggregateRootId: String
-
-  val parentName = "parent"
-  val parent: ActorRef = system.actorOf(Props(new Actor with ActorContextCreationSupport {
-    def receive = {
-      case ("getOrCreateChild", props:Props, name:String) => sender() ! getOrCreateChild(props, name)
-    }
-  }), name = parentName)
+  val aggregateRootId: String
+  val domain: String
 
   override def afterAll() {
     TestKit.shutdownActorSystem(system)
-  }
-
-  import akka.pattern.ask
-  import scala.concurrent.duration._
-
-  def getActor(props:Props)(implicit name: String = aggregateRootId): ActorRef = {
-    implicit val timeout = Timeout(5, SECONDS)
-    Await.result(parent ? ("getOrCreateChild", props, name), 5 seconds).asInstanceOf[ActorRef]
   }
 
   def expectEventPersisted[E <: DomainEvent](when: Unit)(implicit t: ClassTag[E]) {
@@ -43,7 +30,7 @@ abstract class EventsourcedAggregateRootSpec(_system: ActorSystem) extends TestK
 
   def expectLogMessageFromAR(messageStart: String, when: Unit) {
     EventFilter.info(
-      source = s"akka://OrderSpec/user/$parentName/$aggregateRootId",
+      source = s"akka://OrderSpec/user/$domain/$aggregateRootId",
       start = messageStart, occurrences = 1)
       .intercept {
       when

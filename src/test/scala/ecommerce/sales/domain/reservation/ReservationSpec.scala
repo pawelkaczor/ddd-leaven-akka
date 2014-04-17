@@ -1,6 +1,6 @@
 package ecommerce.sales.domain.reservation
 
-import akka.actor.{PoisonPill, Props, ActorSystem}
+import akka.actor.{PoisonPill, ActorSystem}
 import com.typesafe.config.ConfigFactory
 import ecommerce.sales.domain.productscatalog.{ProductData, ProductType}
 import ecommerce.sales.domain.reservation.Reservation._
@@ -12,6 +12,7 @@ import ecommerce.sales.domain.reservation.Reservation.ProductReserved
 import ReservationSpec._
 import ecommerce.sales.sharedkernel.Money
 import test.support.EventsourcedAggregateRootSpec
+import ddd.support.domain.Representative._
 
 object ReservationSpec {
   val testSystem = {
@@ -26,36 +27,33 @@ object ReservationSpec {
 class ReservationSpec extends EventsourcedAggregateRootSpec(testSystem) {
 
   override val aggregateRootId = "reservation1"
+  override val domain = Reservation.domain
 
-  def getReservationActor(name: String) = {
-    getActor(Props[Reservation])(name)
-  }
-
-  "An Reservation actor" must {
+  "An Reservation office" must {
     "handle Reservation process" in {
       val reservationId = aggregateRootId
-      var reservation = getReservationActor(reservationId)
+      var reservationOffice = office[Reservation]
 
       expectEventPersisted[ReservationCreated] {
-        reservation ! CreateReservation(reservationId, "client1")
+        reservationOffice ! CreateReservation(reservationId, "client1")
       }
       expectEventPersisted[ProductReserved] {
-        reservation ! ReserveProduct(reservationId, "product1", 1)
+        reservationOffice ! ReserveProduct(reservationId, "product1", 1)
       }
 
-      // kill and recreate reservation actor
-      reservation ! PoisonPill
+      // kill reservation office and all its clerks (aggregate roots)
+      reservationOffice ! PoisonPill
       Thread.sleep(1000)
-      reservation = getReservationActor(reservationId)
+      reservationOffice = office[Reservation]
 
       val product2 = ProductData("product2", "productName", ProductType.Standard, Money(10))
       val quantity= 1
       expectEventPersisted(ProductReserved(reservationId, product2, quantity)) {
-        reservation ! ReserveProduct(reservationId, "product2", quantity)
+        reservationOffice ! ReserveProduct(reservationId, "product2", quantity)
       }
 
       expectEventPersisted[ReservationClosed] {
-        reservation ! CloseReservation(reservationId)
+        reservationOffice ! CloseReservation(reservationId)
       }
 
     }
