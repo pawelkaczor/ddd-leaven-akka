@@ -11,6 +11,8 @@ import ecommerce.sales.domain.productscatalog.{ProductData, ProductType}
 import java.util.Date
 import ecommerce.sales.sharedkernel.Money
 import ddd.support.domain.{Addressable, AggregateState, AggregateRoot}
+import akka.contrib.pattern.ShardRegion.{ShardResolver, IdExtractor}
+import ddd.support.domain.protocol.Acknowledged
 
 /**
  * Reservation is just a "wish list". System can not guarantee that user can buy desired products.</br>
@@ -21,6 +23,14 @@ import ddd.support.domain.{Addressable, AggregateState, AggregateRoot}
 object Reservation {
 
   val domain: String = "reservation"
+
+  val shardResolver: ShardResolver = {
+    case cmd: Command => (math.abs(cmd.reservationId.hashCode) % 100).toString
+  }
+
+  val idExtractor  : IdExtractor   = {
+    case cmd: Command => (cmd.reservationId, cmd)
+  }
 
   implicit object Addressable extends Addressable[Reservation] {
     def getAddress = {
@@ -68,6 +78,7 @@ class Reservation extends AggregateRoot[State] {
           val product = ProductData(productId, "productName", ProductType.Standard, Money(10))
           raise(ProductReserved(reservationId, product, quantity)) { event =>
             // customized handling of ProductReserved
+            sender() ! Acknowledged
           }
         }
 
@@ -75,6 +86,7 @@ class Reservation extends AggregateRoot[State] {
         raise(ReservationClosed(reservationId))
     }
   }
+
 }
 
 case class State (
