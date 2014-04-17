@@ -24,12 +24,11 @@ object ReservationSpec {
   }
 }
 
-class ReservationSpec extends EventsourcedAggregateRootSpec(testSystem) {
+class ReservationSpec extends EventsourcedAggregateRootSpec[Reservation](testSystem) {
 
   override val aggregateRootId = "reservation1"
-  override val domain = Reservation.domain
 
-  "An Reservation office" must {
+  "Reservation office" must {
     "handle Reservation process" in {
       val reservationId = aggregateRootId
       var reservationOffice = office[Reservation]

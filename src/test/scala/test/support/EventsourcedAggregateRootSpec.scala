@@ -9,26 +9,27 @@ import scala.concurrent.{Future, Await}
 import scala.concurrent.duration._
 import scala.util.Failure
 import scala.reflect.ClassTag
+import ddd.support.domain.Addressable
 
-abstract class EventsourcedAggregateRootSpec(_system: ActorSystem) extends TestKit(_system)
+abstract class EventsourcedAggregateRootSpec[T](_system: ActorSystem) extends TestKit(_system)
   with ImplicitSender with WordSpecLike with Matchers with BeforeAndAfterAll {
 
   val aggregateRootId: String
-  val domain: String
 
   override def afterAll() {
     TestKit.shutdownActorSystem(system)
   }
 
-  def expectEventPersisted[E <: DomainEvent](when: Unit)(implicit t: ClassTag[E]) {
+  def expectEventPersisted[E <: DomainEvent](when: Unit)(implicit t: ClassTag[E], addressable: Addressable[T]) {
     expectLogMessageFromAR("Event persisted: " + t.runtimeClass.getSimpleName, when)
   }
 
-  def expectEventPersisted[E <: DomainEvent](event: E)(when: Unit) {
+  def expectEventPersisted[E <: DomainEvent](event: E)(when: Unit)(implicit addressable: Addressable[T]) {
     expectLogMessageFromAR("Event persisted: " + event.toString, when)
   }
 
-  def expectLogMessageFromAR(messageStart: String, when: Unit) {
+  def expectLogMessageFromAR(messageStart: String, when: Unit)(implicit addressable: Addressable[T]) {
+    val domain = addressable.domain
     EventFilter.info(
       source = s"akka://OrderSpec/user/$domain/$aggregateRootId",
       start = messageStart, occurrences = 1)

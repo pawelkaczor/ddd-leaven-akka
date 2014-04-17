@@ -32,7 +32,6 @@ class Office[T](implicit classTag: ClassTag[T], addressable: Addressable[T])
       deliver(target, msg)
   }
 
-
   def deliver(target: ActorRef, msg: Any) {
     target forward msg
   }
@@ -44,5 +43,4 @@ trait Representative[A] {
   val _addressable: Addressable[A]
 
   def address(msg: Any) = _addressable.getAddress(msg)
-
 }

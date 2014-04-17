@@ -8,10 +8,9 @@ import ecommerce.sales.domain.reservation.Reservation.ReserveProduct
 import ddd.support.domain.error.AggregateRootNotInitializedException
 import ddd.support.domain.Representative._
 
-class ReservationFailuresSpec extends EventsourcedAggregateRootSpec(ReservationSpec.testSystem) {
+class ReservationFailuresSpec extends EventsourcedAggregateRootSpec[Reservation](ReservationSpec.testSystem) {
 
   override val aggregateRootId = "reservation1"
-  override val domain = "reservation"
 
   "Reservation of product" must {
     "fail if Reservation does not exist" in {
