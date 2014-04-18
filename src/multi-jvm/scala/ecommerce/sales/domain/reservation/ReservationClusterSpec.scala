@@ -24,7 +24,7 @@ class ReservationClusterSpec extends AbstractReservationClusterSpec {
     }
 
     "handle commands from multiply nodes" in within(15.seconds) {
-      val reservationId = "reservation1"
+      val reservationId = "reservation3"
 
       runOn(node1) {
         val reservationOffice = globalOffice[Reservation]

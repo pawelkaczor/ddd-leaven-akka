@@ -2,7 +2,6 @@ package infrastructure.cluster
 
 import scala.reflect.ClassTag
 import akka.actor.{Props, ActorSystem}
-import ecommerce.sales.domain.reservation.Reservation
 import akka.contrib.pattern.ClusterSharding
 import scala.Some
 
@@ -12,7 +11,7 @@ trait ShardingSupport {
                            system: ActorSystem) {
     ClusterSharding(system).start(
       typeName = shardable.domain,
-      entryProps = Some(Props[Reservation]),
+      entryProps = Some(Props(classTag.runtimeClass.asInstanceOf[Class[T]])),
       idExtractor = shardable.idExtractor,
       shardResolver = shardable.shardResolver
     )
