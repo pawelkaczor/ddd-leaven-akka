@@ -11,11 +11,9 @@ import test.support.TestConfig._
 
 class ReservationFailuresSpec extends EventsourcedAggregateRootSpec[Reservation](testSystem) {
 
-  override val aggregateRootId = "reservation1"
-
   "Reservation of product" must {
     "fail if Reservation does not exist" in {
-      val reservationId = aggregateRootId
+      val reservationId = "reservation1"
       implicit val timeout = Timeout(5, SECONDS)
 
       // Use ask (?) to send a command and expect Failure(AggregateRootNotInitializedException) in the response

@@ -1,6 +1,6 @@
 package ecommerce.sales.domain.reservation
 
-import akka.actor.{PoisonPill, ActorSystem}
+import akka.actor.{Terminated, ActorRef, PoisonPill, ActorSystem}
 import com.typesafe.config.ConfigFactory
 import ecommerce.sales.domain.productscatalog.{ProductData, ProductType}
 import ecommerce.sales.domain.reservation.Reservation._
@@ -8,44 +8,90 @@ import ecommerce.sales.domain.reservation.Reservation.ReserveProduct
 import ecommerce.sales.domain.reservation.Reservation.CreateReservation
 import ecommerce.sales.domain.reservation.Reservation.ReservationCreated
 import ecommerce.sales.domain.reservation.Reservation.ProductReserved
+import scala.concurrent.duration._
 
 import ecommerce.sales.sharedkernel.Money
 import test.support.EventsourcedAggregateRootSpec
 import ddd.support.domain.Representative._
 import test.support.TestConfig._
+import ddd.support.domain.protocol.Acknowledged
 
-class ReservationSpec extends EventsourcedAggregateRootSpec[Reservation](testSystem) {
+class ReservationSpec extends EventsourcedAggregateRootSpec[Reservation](testSystem)  {
 
-  override val aggregateRootId = "reservation1"
+  var reservationOffice: ActorRef = system.deadLetters
 
-  "Reservation office" must {
-    "handle Reservation process" in {
-      val reservationId = aggregateRootId
-      var reservationOffice = office[Reservation]
+  before {
+    reservationOffice = office[Reservation]
+  }
 
-      expectEventPersisted[ReservationCreated] {
+  after {
+    stop(reservationOffice)
+  }
+
+
+  "Reservation clerk" must {
+    "communicate outcome with events" in {
+      val reservationId = "reservation1"
+
+      expectEventPersisted[ReservationCreated](reservationId) {
         reservationOffice ! CreateReservation(reservationId, "client1")
       }
-      expectEventPersisted[ProductReserved] {
+      expectEventPersisted[ProductReserved](reservationId) {
         reservationOffice ! ReserveProduct(reservationId, "product1", 1)
       }
 
       // kill reservation office and all its clerks (aggregate roots)
-      reservationOffice ! PoisonPill
-      Thread.sleep(1000)
+      stop(reservationOffice)
       reservationOffice = office[Reservation]
 
       val product2 = ProductData("product2", "productName", ProductType.Standard, Money(10))
       val quantity= 1
-      expectEventPersisted(ProductReserved(reservationId, product2, quantity)) {
+      expectEventPersisted(ProductReserved(reservationId, product2, quantity))(reservationId) {
         reservationOffice ! ReserveProduct(reservationId, "product2", quantity)
       }
 
-      expectEventPersisted[ReservationClosed] {
+      expectEventPersisted[ReservationClosed](reservationId) {
         reservationOffice ! CloseReservation(reservationId)
       }
 
     }
   }
+
+  "Reservation office" must {
+    "acknowledge commands" in {
+      val reservationId = "reservation2"
+
+      reservationOffice ! CreateReservation(reservationId, "client1")
+      expectMsg(Acknowledged)
+
+      reservationOffice ! ReserveProduct(reservationId, "product1", 1)
+      expectMsg(Acknowledged)
+
+      // kill reservation office and all its clerks (aggregate roots)
+      stop(reservationOffice)
+      reservationOffice = office[Reservation]
+
+      reservationOffice ! ReserveProduct(reservationId, "product2", 1)
+      expectMsg(Acknowledged)
+
+      reservationOffice ! CloseReservation(reservationId)
+      expectMsg(Acknowledged)
+
+    }
+  }
+
+  private def stop(actor: ActorRef) = {
+    watch(actor)
+    actor ! PoisonPill
+    // wait until reservation office is terminated
+    fishForMessage(1.seconds) {
+      case Terminated(_) =>
+        unwatch(actor)
+        true
+      case _ => false
+    }
+
+  }
+
 
 }

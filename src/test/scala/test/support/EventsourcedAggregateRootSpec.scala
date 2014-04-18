@@ -4,7 +4,7 @@ import akka.actor._
 import akka.testkit.{EventFilter, ImplicitSender, TestKit}
 import akka.util.Timeout
 import ddd.support.domain.event.DomainEvent
-import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
+import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, Matchers, WordSpecLike}
 import scala.concurrent.{Future, Await}
 import scala.concurrent.duration._
 import scala.util.Failure
@@ -12,24 +12,22 @@ import scala.reflect.ClassTag
 import ddd.support.domain.Addressable
 
 abstract class EventsourcedAggregateRootSpec[T](_system: ActorSystem) extends TestKit(_system)
-  with ImplicitSender with WordSpecLike with Matchers with BeforeAndAfterAll {
-
-  val aggregateRootId: String
+  with ImplicitSender with WordSpecLike with Matchers with BeforeAndAfterAll with BeforeAndAfter {
 
   override def afterAll() {
     TestKit.shutdownActorSystem(system)
     system.awaitTermination()
   }
 
-  def expectEventPersisted[E <: DomainEvent](when: Unit)(implicit t: ClassTag[E], addressable: Addressable[T]) {
-    expectLogMessageFromAR("Event persisted: " + t.runtimeClass.getSimpleName, when)
+  def expectEventPersisted[E <: DomainEvent](aggregateRootId: String)(when: Unit)(implicit t: ClassTag[E], addressable: Addressable[T]) {
+    expectLogMessageFromAR("Event persisted: " + t.runtimeClass.getSimpleName, when)(aggregateRootId)
   }
 
-  def expectEventPersisted[E <: DomainEvent](event: E)(when: Unit)(implicit addressable: Addressable[T]) {
-    expectLogMessageFromAR("Event persisted: " + event.toString, when)
+  def expectEventPersisted[E <: DomainEvent](event: E)(aggregateRootId: String)(when: Unit)(implicit addressable: Addressable[T]) {
+    expectLogMessageFromAR("Event persisted: " + event.toString, when)(aggregateRootId)
   }
 
-  def expectLogMessageFromAR(messageStart: String, when: Unit)(implicit addressable: Addressable[T]) {
+  def expectLogMessageFromAR(messageStart: String, when: Unit)(aggregateRootId: String)(implicit addressable: Addressable[T]) {
     val domain = addressable.domain
     EventFilter.info(
       source = s"akka://Tests/user/$domain/$aggregateRootId",
