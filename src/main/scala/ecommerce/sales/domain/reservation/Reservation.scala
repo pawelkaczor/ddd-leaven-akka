@@ -13,6 +13,7 @@ import ecommerce.sales.sharedkernel.Money
 import ddd.support.domain.{Addressable, AggregateState, AggregateRoot}
 import akka.contrib.pattern.ShardRegion.{ShardResolver, IdExtractor}
 import ddd.support.domain.protocol.Acknowledged
+import infrastructure.cluster.Shardable
 
 /**
  * Reservation is just a "wish list". System can not guarantee that user can buy desired products.</br>
@@ -24,16 +25,8 @@ object Reservation {
 
   val domain: String = "reservation"
 
-  val shardResolver: ShardResolver = {
-    case cmd: Command => (math.abs(cmd.reservationId.hashCode) % 100).toString
-  }
-
-  val idExtractor  : IdExtractor   = {
-    case cmd: Command => (cmd.reservationId, cmd)
-  }
-
-  implicit object Addressable extends Addressable[Reservation] {
-    def getAddress = {
+  implicit object Shardable extends Shardable[Reservation] {
+    def addressResolver = {
       case cmd: Command => cmd.reservationId
     }
     override val domain: String = Reservation.domain

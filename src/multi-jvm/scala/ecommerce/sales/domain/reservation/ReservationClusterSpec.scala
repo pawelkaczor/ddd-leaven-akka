@@ -1,106 +1,42 @@
 package ecommerce.sales.domain.reservation
 
-import java.io.File
 import scala.concurrent.duration._
-import org.apache.commons.io.FileUtils
-import akka.actor.ActorIdentity
-import akka.actor.Identify
-import akka.actor.Props
-import akka.cluster.Cluster
-import akka.contrib.pattern.ClusterSharding
-import akka.persistence.Persistence
-import akka.persistence.journal.leveldb.SharedLeveldbJournal
-import akka.persistence.journal.leveldb.SharedLeveldbStore
-import akka.remote.testconductor.RoleName
-import akka.remote.testkit.MultiNodeSpec
-import akka.testkit.ImplicitSender
-import test.support.STMultiNodeSpec
 import ecommerce.sales.domain.reservation.Reservation.{ReserveProduct, CreateReservation}
 import ddd.support.domain.protocol.Acknowledged
+import ddd.support.domain.Representative._
 
-class ReservationSpecMultiJvmNode1 extends ReservationClusterSpec
-class ReservationSpecMultiJvmNode2 extends ReservationClusterSpec
-class ReservationSpecMultiJvmNode3 extends ReservationClusterSpec
 
-class ReservationClusterSpec extends MultiNodeSpec(ReservationClusterConfig)
-  with STMultiNodeSpec with ImplicitSender {
+class ReservationClusterSpec extends AbstractReservationClusterSpec {
 
   import ReservationClusterConfig._
 
-  def initialParticipants = roles.size
-
-  val storageLocations = List(
-    "akka.persistence.journal.leveldb.dir",
-    "akka.persistence.journal.leveldb-shared.store.dir",
-    "akka.persistence.snapshot-store.local.dir").map(s => new File(system.settings.config.getString(s)))
-
-  override protected def atStartup() {
-    runOn(controller) {
-      storageLocations.foreach(dir => FileUtils.deleteDirectory(dir))
-    }
-  }
-
-  override protected def afterTermination() {
-    runOn(controller) {
-      storageLocations.foreach(dir => FileUtils.deleteDirectory(dir))
-    }
-  }
-
-  def join(from: RoleName, to: RoleName): Unit = {
-    runOn(from) {
-      Cluster(system) join node(to).address
-      startSharding()
-    }
-    enterBarrier(from.name + "-joined")
-  }
-
-  def startSharding(): Unit = {
-    ClusterSharding(system).start(
-      typeName = Reservation.domain,
-      entryProps = Some(Props[Reservation]),
-      idExtractor = Reservation.idExtractor,
-      shardResolver = Reservation.shardResolver)
-  }
-
-  "Reservation office" must {
-
-    "setup shared journal" in {
-      // start the Persistence extension
-      Persistence(system)
-      runOn(controller) {
-        system.actorOf(Props[SharedLeveldbStore], "store")
-      }
-      enterBarrier("peristence-started")
-
-      runOn(node1, node2) {
-        system.actorSelection(node(controller) / "user" / "store") ! Identify(None)
-        val sharedStore = expectMsgType[ActorIdentity].ref.get
-        SharedLeveldbJournal.setStore(sharedStore, system)
-      }
-
-      enterBarrier("after-1")
+  "Reservation global office" must {
+    "given shared journal" in {
+      setupSharedJournal()
     }
 
-    "join cluster" in within(15.seconds) {
-      join(node1, node1)
-      join(node2, node1)
-      enterBarrier("after-2")
+    "given cluster" in within(15.seconds) {
+      joinCluster()
+    }
+
+    "start" in {
+      startSharding[Reservation]
     }
 
     "handle commands from multiply nodes" in within(15.seconds) {
       val reservationId = "reservation1"
 
       runOn(node1) {
-        val reservationOffice = ClusterSharding(system).shardRegion(Reservation.domain)
+        val reservationOffice = globalOffice[Reservation]
         reservationOffice ! CreateReservation(reservationId, "client1")
         reservationOffice ! ReserveProduct(reservationId, "product1", 1)
       }
 
       runOn(node2) {
-        val postRegion = ClusterSharding(system).shardRegion(Reservation.domain)
+        val reservationOffice = globalOffice[Reservation]
         awaitAssert {
           within(1.second) {
-            postRegion ! ReserveProduct(reservationId, "product2", 1)
+            reservationOffice ! ReserveProduct(reservationId, "product2", 1)
             expectMsg(Acknowledged)
           }
         }

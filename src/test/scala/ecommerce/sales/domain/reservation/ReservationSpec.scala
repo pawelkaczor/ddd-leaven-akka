@@ -1,7 +1,6 @@
 package ecommerce.sales.domain.reservation
 
-import akka.actor.{Terminated, ActorRef, PoisonPill, ActorSystem}
-import com.typesafe.config.ConfigFactory
+import akka.actor.{Terminated, ActorRef, PoisonPill}
 import ecommerce.sales.domain.productscatalog.{ProductData, ProductType}
 import ecommerce.sales.domain.reservation.Reservation._
 import ecommerce.sales.domain.reservation.Reservation.ReserveProduct
@@ -25,7 +24,7 @@ class ReservationSpec extends EventsourcedAggregateRootSpec[Reservation](testSys
   }
 
   after {
-    stop(reservationOffice)
+    ensureActorTerminated(reservationOffice)
   }
 
 
@@ -41,7 +40,7 @@ class ReservationSpec extends EventsourcedAggregateRootSpec[Reservation](testSys
       }
 
       // kill reservation office and all its clerks (aggregate roots)
-      stop(reservationOffice)
+      ensureActorTerminated(reservationOffice)
       reservationOffice = office[Reservation]
 
       val product2 = ProductData("product2", "productName", ProductType.Standard, Money(10))
@@ -68,7 +67,7 @@ class ReservationSpec extends EventsourcedAggregateRootSpec[Reservation](testSys
       expectMsg(Acknowledged)
 
       // kill reservation office and all its clerks (aggregate roots)
-      stop(reservationOffice)
+      ensureActorTerminated(reservationOffice)
       reservationOffice = office[Reservation]
 
       reservationOffice ! ReserveProduct(reservationId, "product2", 1)
@@ -80,7 +79,7 @@ class ReservationSpec extends EventsourcedAggregateRootSpec[Reservation](testSys
     }
   }
 
-  private def stop(actor: ActorRef) = {
+  private def ensureActorTerminated(actor: ActorRef) = {
     watch(actor)
     actor ! PoisonPill
     // wait until reservation office is terminated

@@ -18,7 +18,7 @@ class ReservationFailuresSpec extends EventsourcedAggregateRootSpec[Reservation]
 
       // Use ask (?) to send a command and expect Failure(AggregateRootNotInitializedException) in the response
       expectFailure[AggregateRootNotInitializedException] {
-        representative[Reservation] ? ReserveProduct(reservationId, "product1", 1)
+        office[Reservation] ? ReserveProduct(reservationId, "product1", 1)
       }
     }
   }

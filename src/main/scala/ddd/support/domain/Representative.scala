@@ -3,18 +3,22 @@ package ddd.support.domain
 import akka.actor._
 import infrastructure.actor.ActorContextCreationSupport
 import scala.reflect.ClassTag
+import ecommerce.sales.domain.reservation.Reservation
+import akka.contrib.pattern.ClusterSharding
+import infrastructure.cluster.Shardable
 
 object Representative {
-  def representative[T](implicit classTag: ClassTag[T], addressable: Addressable[T],
+
+  def office[T](implicit classTag: ClassTag[T], addressable: Addressable[T],
                         system: ActorRefFactory): ActorRef = {
     system.actorOf(Props(new Office[T]), name = addressable.domain)
   }
 
-  // more friendly name
-  def office[T](implicit classTag: ClassTag[T], addressable: Addressable[T],
-                        system: ActorRefFactory): ActorRef = {
-    representative[T]
+  def globalOffice[T](implicit classTag: ClassTag[T], addressable: Shardable[T],
+                system: ActorSystem): ActorRef = {
+    ClusterSharding(system).shardRegion(addressable.domain)
   }
+
 }
 
 /**
@@ -42,5 +46,5 @@ trait Representative[A] {
   
   val _addressable: Addressable[A]
 
-  def address(msg: Any) = _addressable.getAddress(msg)
+  def address(msg: Any) = _addressable.addressResolver(msg)
 }

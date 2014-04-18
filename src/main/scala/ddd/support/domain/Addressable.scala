@@ -1,6 +1,10 @@
 package ddd.support.domain
 
+import ddd.support.domain.Addressable.AddressResolver
+
 object Addressable {
+
+  type AddressResolver = PartialFunction[Any, String]
 
   /**
    * Implicit view.
@@ -13,13 +17,16 @@ object Addressable {
    */
   implicit def addAddressable[T](implicit addressable: Addressable[T]) =
     new {
-      def getAddress = addressable.getAddress
+      def addressResolver = addressable.addressResolver
     }
 
 
 }
 
 trait Addressable[T] {
-  def getAddress: PartialFunction[Any, String]
+  def addressResolver: AddressResolver
   val domain: String
 }
+
+
+
