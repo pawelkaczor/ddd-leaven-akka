@@ -3,7 +3,6 @@ package ecommerce.sales.domain.reservation
 import java.io.File
 import scala.concurrent.duration._
 import org.apache.commons.io.FileUtils
-import com.typesafe.config.ConfigFactory
 import akka.actor.ActorIdentity
 import akka.actor.Identify
 import akka.actor.Props
@@ -13,38 +12,20 @@ import akka.persistence.Persistence
 import akka.persistence.journal.leveldb.SharedLeveldbJournal
 import akka.persistence.journal.leveldb.SharedLeveldbStore
 import akka.remote.testconductor.RoleName
-import akka.remote.testkit.MultiNodeConfig
 import akka.remote.testkit.MultiNodeSpec
 import akka.testkit.ImplicitSender
 import test.support.STMultiNodeSpec
 import ecommerce.sales.domain.reservation.Reservation.{ReserveProduct, CreateReservation}
 import ddd.support.domain.protocol.Acknowledged
 
-object ReservationClusterSpec extends MultiNodeConfig {
-
-  val controller = role("controller")
-  val node1 = role("node1")
-  val node2 = role("node2")
-
-  commonConfig(ConfigFactory.parseString("""
-    akka.actor.provider = "akka.cluster.ClusterActorRefProvider"
-    akka.persistence.journal.plugin = "akka.persistence.journal.leveldb-shared"
-    akka.persistence.journal.leveldb-shared.store {
-      native = off
-      dir = "target/test-shared-journal"
-    }
-    akka.persistence.snapshot-store.local.dir = "target/test-snapshots"
-                                         """))
-}
-
 class ReservationSpecMultiJvmNode1 extends ReservationClusterSpec
 class ReservationSpecMultiJvmNode2 extends ReservationClusterSpec
 class ReservationSpecMultiJvmNode3 extends ReservationClusterSpec
 
-class ReservationClusterSpec extends MultiNodeSpec(ReservationClusterSpec)
+class ReservationClusterSpec extends MultiNodeSpec(ReservationClusterConfig)
   with STMultiNodeSpec with ImplicitSender {
 
-  import ReservationClusterSpec._
+  import ReservationClusterConfig._
 
   def initialParticipants = roles.size
 
