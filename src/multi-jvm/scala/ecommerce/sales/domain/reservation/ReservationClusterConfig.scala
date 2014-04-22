@@ -5,7 +5,6 @@ import com.typesafe.config.ConfigFactory
 
 object ReservationClusterConfig extends MultiNodeConfig {
 
-  val controller = role("controller")
   val node1 = role("node1")
   val node2 = role("node2")
 

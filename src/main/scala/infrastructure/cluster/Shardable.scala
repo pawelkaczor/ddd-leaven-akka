@@ -11,14 +11,14 @@ object Shardable {
 
   val defaultShardResolutionStrategy: ShardResolutionStrategy = {
     addressResolver => {
-      case msg: Msg => Integer.toHexString(addressResolver(msg).hashCode)
+      case msg: Msg => Integer.toHexString(addressResolver(msg).hashCode).charAt(0).toString
     }
   }
 }
 
 trait Shardable[T] extends Addressable[T] {
 
-  val shardResolutionStrategy = defaultShardResolutionStrategy
+  def shardResolutionStrategy = defaultShardResolutionStrategy
 
   val shardResolver: ShardResolver = shardResolutionStrategy(addressResolver)
 

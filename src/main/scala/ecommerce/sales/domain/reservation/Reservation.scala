@@ -25,8 +25,15 @@ object Reservation {
 
   val domain: String = "reservation"
 
+  trait ReservationShardable extends Shardable[Reservation] {
+    override def addressResolver = {
+      case cmd: Command => cmd.reservationId
+    }
+    override val domain: String = Reservation.domain
+  }
+
   implicit object Shardable extends Shardable[Reservation] {
-    def addressResolver = {
+    override def addressResolver = {
       case cmd: Command => cmd.reservationId
     }
     override val domain: String = Reservation.domain
@@ -71,6 +78,7 @@ class Reservation extends AggregateRoot[State] {
           val product = ProductData(productId, "productName", ProductType.Standard, Money(10))
           raise(ProductReserved(reservationId, product, quantity)) { event =>
             // customized handling of ProductReserved
+            publish(event)
             sender() ! Acknowledged
           }
         }
