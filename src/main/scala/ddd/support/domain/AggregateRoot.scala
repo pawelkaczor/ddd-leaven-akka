@@ -1,24 +1,36 @@
 package ddd.support.domain
 
-import akka.actor.ActorLogging
+import akka.actor._
 import ddd.support.domain.event.DomainEvent
 import akka.persistence.EventsourcedProcessor
+import infrastructure.actor.{Passivate, GracefulPassivation}
+import scala.concurrent.duration._
+import ddd.support.domain.protocol.Acknowledged
 import ddd.support.domain.error.AggregateRootNotInitializedException
 import akka.actor.Status.Failure
-import ddd.support.domain.protocol.Acknowledged
 
 trait AggregateState {
   type StateMachine = PartialFunction[DomainEvent, AggregateState]
   def apply: StateMachine
 }
 
-trait AggregateRoot[S <: AggregateState] extends EventsourcedProcessor with ActorLogging {
+abstract class AggregateRoot[S <: AggregateState](
+    override val passivationMsg: Any = Passivate(PoisonPill),
+    override val inactivityTimeout: Duration = 1.minutes)
+  extends GracefulPassivation with EventsourcedProcessor with ActorLogging {
 
   type AggregateRootFactory = PartialFunction[DomainEvent, S]
   type EventHandler = DomainEvent => Unit
   private var stateOpt: Option[S] = None
 
   val factory: AggregateRootFactory
+
+  override def receiveCommand: Receive = {
+    case msg =>
+      handleCommand.applyOrElse(msg, unhandled)
+  }
+
+  def handleCommand: Receive
 
   override def receiveRecover: Receive = {
     case evt: DomainEvent => updateState(evt)

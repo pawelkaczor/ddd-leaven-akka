@@ -1,6 +1,6 @@
 package infrastructure.actor
 
-import akka.actor.{ActorContext, Props, ActorRef}
+import akka.actor.{ActorLogging, ActorContext, Props, ActorRef}
 
 trait CreationSupport {
   def getChild(name:String):Option[ActorRef]
@@ -9,9 +9,14 @@ trait CreationSupport {
 }
 
 trait ActorContextCreationSupport extends CreationSupport {
+  this: ActorLogging =>
   def context:ActorContext
 
   def getChild(name:String):Option[ActorRef] = context.child(name)
-  def createChild(props:Props, name:String):ActorRef = context.actorOf(props, name)
+  def createChild(props:Props, name:String):ActorRef = {
+    val actor: ActorRef = context.actorOf(props, name)
+    log.info(s"Actor created $actor")
+    actor
+  }
 }
 

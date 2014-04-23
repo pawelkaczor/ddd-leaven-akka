@@ -8,7 +8,7 @@ import ddd.support.domain.{AggregateState, AggregateRoot}
 
 class Product extends AggregateRoot[ProductState] with EventsourcedProcessor with ActorLogging {
 
-  override def receiveCommand: Product#Receive = ???
+  override def handleCommand: Product#Receive = ???
 
   override def receiveRecover: Product#Receive = ???
 

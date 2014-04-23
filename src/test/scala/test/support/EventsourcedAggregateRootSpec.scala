@@ -37,6 +37,16 @@ abstract class EventsourcedAggregateRootSpec[T](_system: ActorSystem) extends Te
     }
   }
 
+  def expectLogMessageFromOffice(messageStart: String)(when: Unit)(implicit addressable: Addressable[T]) {
+    val domain = addressable.domain
+    EventFilter.info(
+      source = s"akka://Tests/user/$domain",
+      start = messageStart, occurrences = 1)
+      .intercept {
+      when
+    }
+  }
+
   def expectFailure[E](awaitable: Future[Any])(implicit t: ClassTag[E]) {
     implicit val timeout = Timeout(5, SECONDS)
     val future = Await.ready(awaitable, timeout.duration).asInstanceOf[Future[Any]]
@@ -45,6 +55,12 @@ abstract class EventsourcedAggregateRootSpec[T](_system: ActorSystem) extends Te
       case Failure(ex) if ex.getClass.equals(t.runtimeClass) => () //ok
       case x => fail(s"Unexpected result: $x")
     }
-
   }
+
+  def expectReply[O, R](obj: O)(when: => R): R = {
+    val r = when
+    expectMsg(20.seconds, obj)
+    r
+  }
+
 }

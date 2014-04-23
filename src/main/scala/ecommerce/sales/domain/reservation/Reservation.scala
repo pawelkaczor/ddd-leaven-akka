@@ -10,10 +10,10 @@ import ecommerce.sales.domain.reservation.errors.{ReservationOperationException,
 import ecommerce.sales.domain.productscatalog.{ProductData, ProductType}
 import java.util.Date
 import ecommerce.sales.sharedkernel.Money
-import ddd.support.domain.{Addressable, AggregateState, AggregateRoot}
-import akka.contrib.pattern.ShardRegion.{ShardResolver, IdExtractor}
+import ddd.support.domain.{AggregateState, AggregateRoot}
 import ddd.support.domain.protocol.Acknowledged
 import infrastructure.cluster.Shardable
+import scala.concurrent.duration.Duration
 
 /**
  * Reservation is just a "wish list". System can not guarantee that user can buy desired products.</br>
@@ -52,14 +52,17 @@ object Reservation {
 
 }
 
-class Reservation extends AggregateRoot[State] {
+class Reservation(
+    override val passivationMsg: Any,
+    override val inactivityTimeout: Duration)
+  extends AggregateRoot[State](passivationMsg, inactivityTimeout) {
 
   override val factory: AggregateRootFactory = {
     case ReservationCreated(_, clientId) =>
       State(clientId, Opened, items = List.empty, createDate = new Date)
   }
 
-  override def receiveCommand: Receive = {
+  override def handleCommand: Receive = {
     case cmd: Command => cmd match {
 
       case CreateReservation(reservationId, clientId) =>
