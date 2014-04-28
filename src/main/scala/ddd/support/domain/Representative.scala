@@ -37,18 +37,19 @@ class Office[T <: AggregateRoot[_]](inactivityTimeout: Duration = 1.minutes)
   override val _addressable = addressable
   
   def receive: Receive = {
+    // TODO (passivation) in-between receiving Passivate and Terminated the office should buffer all incoming messages
+    // for the clerk being passivated, when receiving Terminated it should flush the buffer
     case Passivate(stopMessage) =>
-      val sender = super.sender()
-      log.info(s"Passivating $sender")
-      sender ! stopMessage
+      passivate(sender(), stopMessage)
     case msg =>
       val arProps: Props = Props(classTag.runtimeClass.asInstanceOf[Class[T]], Passivate(PoisonPill), inactivityTimeout)
-      val target = getOrCreateChild(arProps, address(msg))
-      deliver(target, msg)
+      val clerk = getOrCreateChild(arProps, address(msg))
+      clerk forward msg
   }
 
-  def deliver(target: ActorRef, msg: Any) {
-    target forward msg
+  def passivate(clerk: ActorRef, stopMessage: Any) {
+    log.info(s"Passivating $sender")
+    clerk ! stopMessage
   }
 }
 
