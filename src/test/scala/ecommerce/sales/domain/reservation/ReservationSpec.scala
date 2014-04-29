@@ -11,7 +11,7 @@ import scala.concurrent.duration._
 
 import ecommerce.sales.sharedkernel.Money
 import test.support.EventsourcedAggregateRootSpec
-import ddd.support.domain.Representative._
+import ddd.support.domain.Office._
 import test.support.TestConfig._
 import ddd.support.domain.protocol.Acknowledged
 

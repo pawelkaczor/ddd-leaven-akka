@@ -12,7 +12,7 @@ import java.util.Date
 import ecommerce.sales.sharedkernel.Money
 import ddd.support.domain.{AggregateState, AggregateRoot}
 import ddd.support.domain.protocol.Acknowledged
-import infrastructure.cluster.Shardable
+import infrastructure.cluster.ShardResolution
 import scala.concurrent.duration.Duration
 
 /**
@@ -24,16 +24,10 @@ import scala.concurrent.duration.Duration
 object Reservation {
 
   val domain: String = "reservation"
+  implicit val shardResolution  = new ReservationShardResolution
 
-  trait ReservationShardable extends Shardable[Reservation] {
-    override def addressResolver = {
-      case cmd: Command => cmd.reservationId
-    }
-    override val domain: String = Reservation.domain
-  }
-
-  implicit object Shardable extends Shardable[Reservation] {
-    override def addressResolver = {
+  class ReservationShardResolution extends ShardResolution[Reservation] {
+    override def aggregateIdResolver = {
       case cmd: Command => cmd.reservationId
     }
     override val domain: String = Reservation.domain

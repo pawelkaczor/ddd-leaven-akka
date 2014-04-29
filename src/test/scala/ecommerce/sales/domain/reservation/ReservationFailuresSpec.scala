@@ -6,7 +6,7 @@ import akka.util.Timeout
 import scala.concurrent.duration._
 import ecommerce.sales.domain.reservation.Reservation.ReserveProduct
 import ddd.support.domain.error.AggregateRootNotInitializedException
-import ddd.support.domain.Representative._
+import ddd.support.domain.Office._
 import test.support.TestConfig._
 
 class ReservationFailuresSpec extends EventsourcedAggregateRootSpec[Reservation](testSystem) {

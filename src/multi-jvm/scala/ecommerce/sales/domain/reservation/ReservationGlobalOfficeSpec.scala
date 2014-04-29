@@ -2,8 +2,8 @@ package ecommerce.sales.domain.reservation
 
 import scala.concurrent.duration._
 import ddd.support.domain.protocol.Acknowledged
-import ddd.support.domain.Representative._
-import infrastructure.cluster.Shardable.ShardResolutionStrategy
+import ddd.support.domain.Office._
+import infrastructure.cluster.ShardResolution.ShardResolutionStrategy
 import akka.contrib.pattern.ShardRegion._
 import ecommerce.sales.domain.reservation.Reservation._
 import akka.testkit.TestProbe
@@ -21,7 +21,7 @@ class ReservationGlobalOfficeSpec extends ReservationClusterSpec {
       joinCluster()
     }
     "given work distribution enabled" in {
-      startSharding[Reservation](new Reservation.ReservationShardable {
+      startSharding[Reservation](new Reservation.ReservationShardResolution {
         //take last char of reservationId as shard id
         override def shardResolutionStrategy: ShardResolutionStrategy =
           addressResolver => {

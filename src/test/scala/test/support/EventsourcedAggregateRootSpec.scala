@@ -9,7 +9,7 @@ import scala.concurrent.{Future, Await}
 import scala.concurrent.duration._
 import scala.util.Failure
 import scala.reflect.ClassTag
-import ddd.support.domain.Addressable
+import ddd.support.domain.AggregateIdResolution
 
 abstract class EventsourcedAggregateRootSpec[T](_system: ActorSystem) extends TestKit(_system)
   with ImplicitSender with WordSpecLike with Matchers with BeforeAndAfterAll with BeforeAndAfter {
@@ -19,26 +19,26 @@ abstract class EventsourcedAggregateRootSpec[T](_system: ActorSystem) extends Te
     system.awaitTermination()
   }
 
-  def expectEventPersisted[E <: DomainEvent](aggregateRootId: String)(when: Unit)(implicit t: ClassTag[E], addressable: Addressable[T]) {
-    expectLogMessageFromAR("Event persisted: " + t.runtimeClass.getSimpleName, when)(aggregateRootId)
+  def expectEventPersisted[E <: DomainEvent](aggregateId: String)(when: Unit)(implicit t: ClassTag[E], idResolution: AggregateIdResolution[T]) {
+    expectLogMessageFromAR("Event persisted: " + t.runtimeClass.getSimpleName, when)(aggregateId)
   }
 
-  def expectEventPersisted[E <: DomainEvent](event: E)(aggregateRootId: String)(when: Unit)(implicit addressable: Addressable[T]) {
+  def expectEventPersisted[E <: DomainEvent](event: E)(aggregateRootId: String)(when: Unit)(implicit idResolution: AggregateIdResolution[T]) {
     expectLogMessageFromAR("Event persisted: " + event.toString, when)(aggregateRootId)
   }
 
-  def expectLogMessageFromAR(messageStart: String, when: Unit)(aggregateRootId: String)(implicit addressable: Addressable[T]) {
-    val domain = addressable.domain
+  def expectLogMessageFromAR(messageStart: String, when: Unit)(aggregateId: String)(implicit idResolution: AggregateIdResolution[T]) {
+    val domain = idResolution.domain
     EventFilter.info(
-      source = s"akka://Tests/user/$domain/$aggregateRootId",
+      source = s"akka://Tests/user/$domain/$aggregateId",
       start = messageStart, occurrences = 1)
       .intercept {
       when
     }
   }
 
-  def expectLogMessageFromOffice(messageStart: String)(when: Unit)(implicit addressable: Addressable[T]) {
-    val domain = addressable.domain
+  def expectLogMessageFromOffice(messageStart: String)(when: Unit)(implicit idResolution: AggregateIdResolution[T]) {
+    val domain = idResolution.domain
     EventFilter.info(
       source = s"akka://Tests/user/$domain",
       start = messageStart, occurrences = 1)
