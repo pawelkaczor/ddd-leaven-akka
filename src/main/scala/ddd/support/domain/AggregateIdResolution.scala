@@ -10,7 +10,6 @@ object AggregateIdResolution {
 
 trait AggregateIdResolution[T] {
   def aggregateIdResolver: AggregateIdResolver
-  val domain: String
 }
 
 

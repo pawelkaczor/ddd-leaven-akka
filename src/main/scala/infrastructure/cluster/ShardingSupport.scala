@@ -21,7 +21,7 @@ trait ShardingSupport {
     val arProps = Props(arClass, Passivate(stopMessage = PoisonPill), inactivityTimeout)
 
     ClusterSharding(system).start(
-      typeName = shardResolution.domain,
+      typeName = arClass.getSimpleName,
       entryProps = Some(arProps),
       idExtractor = shardResolution.idExtractor,
       shardResolver = shardResolution.shardResolver

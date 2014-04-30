@@ -16,17 +16,18 @@ object Office {
 
   def office[T <: AggregateRoot[_]](inactivityTimeout: Duration = 1.minute)
       (implicit classTag: ClassTag[T], caseIdResolution: AggregateIdResolution[T], system: ActorRefFactory): ActorRef = {
-    system.actorOf(Props(new Office[T](inactivityTimeout)), name = caseIdResolution.domain)
+    system.actorOf(Props(new Office[T](inactivityTimeout)), officeName(classTag))
   }
 
-  def globalOffice[T](implicit classTag: ClassTag[T], shardResolution: ShardResolution[T], system: ActorSystem): ActorRef = {
-    ClusterSharding(system).shardRegion(shardResolution.domain)
+  def globalOffice[T](implicit classTag: ClassTag[T], system: ActorSystem): ActorRef = {
+    ClusterSharding(system).shardRegion(officeName(classTag))
   }
 
+  def officeName[T](classTag: ClassTag[T]) = classTag.runtimeClass.getSimpleName
 }
 
 class Office[T <: AggregateRoot[_]](inactivityTimeout: Duration = 1.minutes)
-    (implicit classTag: ClassTag[T], caseIdResolution: AggregateIdResolution[T])
+    (implicit arClassTag: ClassTag[T], caseIdResolution: AggregateIdResolution[T])
   extends ActorContextCreationSupport with Actor with ActorLogging {
 
   def receive: Receive = {
@@ -35,7 +36,7 @@ class Office[T <: AggregateRoot[_]](inactivityTimeout: Duration = 1.minutes)
     case Passivate(stopMessage) =>
       dismiss(sender(), stopMessage)
     case msg =>
-      val caseProps = Props(classTag.runtimeClass.asInstanceOf[Class[T]], Passivate(PoisonPill), inactivityTimeout)
+      val caseProps = Props(arClassTag.runtimeClass.asInstanceOf[Class[T]], Passivate(PoisonPill), inactivityTimeout)
       val clerk = assignClerk(caseProps, resolveCaseId(msg))
       clerk forward msg
   }

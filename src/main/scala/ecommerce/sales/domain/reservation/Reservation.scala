@@ -23,14 +23,12 @@ import scala.concurrent.duration.Duration
  */
 object Reservation {
 
-  val domain: String = "reservation"
   implicit val shardResolution  = new ReservationShardResolution
 
   class ReservationShardResolution extends ShardResolution[Reservation] {
     override def aggregateIdResolver = {
       case cmd: Command => cmd.reservationId
     }
-    override val domain: String = Reservation.domain
   }
 
   // Commands

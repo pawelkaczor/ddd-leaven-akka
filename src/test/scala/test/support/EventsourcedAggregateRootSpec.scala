@@ -11,8 +11,10 @@ import scala.util.Failure
 import scala.reflect.ClassTag
 import ddd.support.domain.AggregateIdResolution
 
-abstract class EventsourcedAggregateRootSpec[T](_system: ActorSystem) extends TestKit(_system)
+abstract class EventsourcedAggregateRootSpec[T](_system: ActorSystem)(implicit arClassTag: ClassTag[T]) extends TestKit(_system)
   with ImplicitSender with WordSpecLike with Matchers with BeforeAndAfterAll with BeforeAndAfter {
+
+  val domain = arClassTag.runtimeClass.getSimpleName
 
   override def afterAll() {
     TestKit.shutdownActorSystem(system)
@@ -28,7 +30,6 @@ abstract class EventsourcedAggregateRootSpec[T](_system: ActorSystem) extends Te
   }
 
   def expectLogMessageFromAR(messageStart: String, when: Unit)(aggregateId: String)(implicit idResolution: AggregateIdResolution[T]) {
-    val domain = idResolution.domain
     EventFilter.info(
       source = s"akka://Tests/user/$domain/$aggregateId",
       start = messageStart, occurrences = 1)
@@ -38,7 +39,6 @@ abstract class EventsourcedAggregateRootSpec[T](_system: ActorSystem) extends Te
   }
 
   def expectLogMessageFromOffice(messageStart: String)(when: Unit)(implicit idResolution: AggregateIdResolution[T]) {
-    val domain = idResolution.domain
     EventFilter.info(
       source = s"akka://Tests/user/$domain",
       start = messageStart, occurrences = 1)

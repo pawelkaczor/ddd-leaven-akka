@@ -16,7 +16,7 @@ object ShardResolution {
   }
 }
 
-trait ShardResolution[T] extends AggregateIdResolution[T] {
+abstract class ShardResolution[T] extends AggregateIdResolution[T] {
 
   def shardResolutionStrategy = defaultShardResolutionStrategy
 
