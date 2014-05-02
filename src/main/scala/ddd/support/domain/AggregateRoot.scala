@@ -3,8 +3,7 @@ package ddd.support.domain
 import akka.actor._
 import ddd.support.domain.event.DomainEvent
 import akka.persistence.EventsourcedProcessor
-import infrastructure.actor.{Passivate, GracefulPassivation}
-import scala.concurrent.duration._
+import infrastructure.actor.{PassivationConfig, GracefulPassivation}
 import ddd.support.domain.protocol.Acknowledged
 import ddd.support.domain.error.AggregateRootNotInitializedException
 import akka.actor.Status.Failure
@@ -14,9 +13,11 @@ trait AggregateState {
   def apply: StateMachine
 }
 
-abstract class AggregateRoot[S <: AggregateState](
-    override val passivationMsg: Any = Passivate(PoisonPill),
-    override val inactivityTimeout: Duration = 1.minutes)
+abstract class AggregateRootActorFactory[T <: AggregateRoot[_]] {
+  def props(passivationConfig: PassivationConfig): Props
+}
+
+abstract class AggregateRoot[S <: AggregateState](override val passivationConfig: PassivationConfig)
   extends GracefulPassivation with EventsourcedProcessor with ActorLogging {
 
   type AggregateRootFactory = PartialFunction[DomainEvent, S]

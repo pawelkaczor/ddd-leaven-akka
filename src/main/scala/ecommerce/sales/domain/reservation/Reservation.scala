@@ -10,10 +10,10 @@ import ecommerce.sales.domain.reservation.errors.{ReservationOperationException,
 import ecommerce.sales.domain.productscatalog.{ProductData, ProductType}
 import java.util.Date
 import ecommerce.sales.sharedkernel.Money
-import ddd.support.domain.{AggregateState, AggregateRoot}
+import ddd.support.domain.{AggregateIdResolution, AggregateRootActorFactory, AggregateState, AggregateRoot}
 import ddd.support.domain.protocol.Acknowledged
-import infrastructure.cluster.ShardResolution
-import scala.concurrent.duration.Duration
+import infrastructure.actor.PassivationConfig
+import akka.actor.Props
 
 /**
  * Reservation is just a "wish list". System can not guarantee that user can buy desired products.</br>
@@ -23,9 +23,14 @@ import scala.concurrent.duration.Duration
  */
 object Reservation {
 
-  implicit val shardResolution  = new ReservationShardResolution
+  implicit val idResolution  = new ReservationIdResolution
+  implicit val actorFactory = new ReservationActorFactory
 
-  class ReservationShardResolution extends ShardResolution[Reservation] {
+  class ReservationActorFactory extends AggregateRootActorFactory[Reservation] {
+    override def props(passivationConfig: PassivationConfig): Props = Props(new Reservation(passivationConfig))
+  }
+
+  class ReservationIdResolution extends AggregateIdResolution[Reservation] {
     override def aggregateIdResolver = {
       case cmd: Command => cmd.reservationId
     }
@@ -44,10 +49,7 @@ object Reservation {
 
 }
 
-class Reservation(
-    override val passivationMsg: Any,
-    override val inactivityTimeout: Duration)
-  extends AggregateRoot[State](passivationMsg, inactivityTimeout) {
+class Reservation(passConfig: PassivationConfig) extends AggregateRoot[State](passConfig) {
 
   override val factory: AggregateRootFactory = {
     case ReservationCreated(_, clientId) =>

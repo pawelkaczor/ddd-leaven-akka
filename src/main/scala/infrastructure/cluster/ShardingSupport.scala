@@ -6,19 +6,20 @@ import akka.contrib.pattern.ClusterSharding
 import scala.Some
 import akka.contrib.pattern.ShardRegion.Passivate
 import scala.concurrent.duration._
-import ddd.support.domain.AggregateRoot
+import ddd.support.domain.{AggregateRootActorFactory, AggregateRoot}
+import infrastructure.actor.PassivationConfig
 
 trait ShardingSupport {
 
   def startSharding[T <: AggregateRoot[_]](implicit classTag: ClassTag[T], shardResolution: ShardResolution[T],
-                           system: ActorSystem) {
+                           system: ActorSystem, arActorFactory: AggregateRootActorFactory[T]) {
     startSharding(shardResolution)
   }
 
   def startSharding[T <: AggregateRoot[_]](shardResolution: ShardResolution[T], inactivityTimeout: Duration = 1.minutes)
-                               (implicit classTag: ClassTag[T], system: ActorSystem) {
+                               (implicit classTag: ClassTag[T], system: ActorSystem, arActorFactory: AggregateRootActorFactory[T]) {
     val arClass = classTag.runtimeClass.asInstanceOf[Class[T]]
-    val arProps = Props(arClass, Passivate(stopMessage = PoisonPill), inactivityTimeout)
+    val arProps = arActorFactory.props(new PassivationConfig(Passivate(PoisonPill), inactivityTimeout))
 
     ClusterSharding(system).start(
       typeName = arClass.getSimpleName,

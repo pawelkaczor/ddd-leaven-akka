@@ -1,7 +1,7 @@
 package ddd.support.domain
 
 import akka.actor._
-import infrastructure.actor.{Passivate, ActorContextCreationSupport}
+import infrastructure.actor.{PassivationConfig, Passivate, ActorContextCreationSupport}
 import scala.reflect.ClassTag
 import akka.contrib.pattern.ClusterSharding
 import infrastructure.cluster.ShardResolution
@@ -9,13 +9,21 @@ import scala.concurrent.duration._
 
 object Office {
 
-  def office[T <: AggregateRoot[_]](implicit classTag: ClassTag[T], caseIdResolution: AggregateIdResolution[T],
-    system: ActorRefFactory): ActorRef = {
+  def office[T <: AggregateRoot[_]](
+      implicit classTag: ClassTag[T],
+      caseIdResolution: AggregateIdResolution[T],
+      clerkFactory: AggregateRootActorFactory[T],
+      system: ActorRefFactory): ActorRef = {
+
     office[T]()
   }
 
-  def office[T <: AggregateRoot[_]](inactivityTimeout: Duration = 1.minute)
-      (implicit classTag: ClassTag[T], caseIdResolution: AggregateIdResolution[T], system: ActorRefFactory): ActorRef = {
+  def office[T <: AggregateRoot[_]](inactivityTimeout: Duration = 1.minute)(
+      implicit classTag: ClassTag[T],
+      caseIdResolution: AggregateIdResolution[T],
+      clerkFactory: AggregateRootActorFactory[T],
+      system: ActorRefFactory): ActorRef = {
+
     system.actorOf(Props(new Office[T](inactivityTimeout)), officeName(classTag))
   }
 
@@ -26,8 +34,10 @@ object Office {
   def officeName[T](classTag: ClassTag[T]) = classTag.runtimeClass.getSimpleName
 }
 
-class Office[T <: AggregateRoot[_]](inactivityTimeout: Duration = 1.minutes)
-    (implicit arClassTag: ClassTag[T], caseIdResolution: AggregateIdResolution[T])
+class Office[T <: AggregateRoot[_]](inactivityTimeout: Duration = 1.minutes)(
+    implicit arClassTag: ClassTag[T],
+    caseIdResolution: AggregateIdResolution[T],
+    clerkFactory: AggregateRootActorFactory[T])
   extends ActorContextCreationSupport with Actor with ActorLogging {
 
   def receive: Receive = {
@@ -36,8 +46,8 @@ class Office[T <: AggregateRoot[_]](inactivityTimeout: Duration = 1.minutes)
     case Passivate(stopMessage) =>
       dismiss(sender(), stopMessage)
     case msg =>
-      val caseProps = Props(arClassTag.runtimeClass.asInstanceOf[Class[T]], Passivate(PoisonPill), inactivityTimeout)
-      val clerk = assignClerk(caseProps, resolveCaseId(msg))
+      val clerkProps = clerkFactory.props(PassivationConfig(Passivate(PoisonPill), inactivityTimeout))
+      val clerk = assignClerk(clerkProps, resolveCaseId(msg))
       clerk forward msg
   }
 

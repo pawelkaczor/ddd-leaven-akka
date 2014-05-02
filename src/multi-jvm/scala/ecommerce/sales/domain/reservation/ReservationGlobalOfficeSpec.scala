@@ -9,6 +9,7 @@ import ecommerce.sales.domain.reservation.Reservation._
 import akka.testkit.TestProbe
 import ddd.support.domain.event.DomainEvent
 import scala.reflect.ClassTag
+import infrastructure.cluster.ReservationShardResolution
 
 
 class ReservationGlobalOfficeSpec extends ReservationClusterSpec {
@@ -21,7 +22,7 @@ class ReservationGlobalOfficeSpec extends ReservationClusterSpec {
       joinCluster()
     }
     "given work distribution enabled" in {
-      startSharding[Reservation](new Reservation.ReservationShardResolution {
+      startSharding[Reservation](new ReservationShardResolution {
         //take last char of reservationId as shard id
         override def shardResolutionStrategy: ShardResolutionStrategy =
           addressResolver => {

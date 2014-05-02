@@ -6,16 +6,19 @@ import scala.concurrent.duration.Duration
 @SerialVersionUID(1L)
 case class Passivate(stopMessage: Any)
 
+case class PassivationConfig(passivationMsg: Any, inactivityTimeout: Duration)
+
 trait GracefulPassivation extends Actor {
 
-  val passivationMsg: Any
-  val inactivityTimeout: Duration
+  val passivationConfig: PassivationConfig
 
-  context.setReceiveTimeout(inactivityTimeout)
+  override def preStart() {
+    context.setReceiveTimeout(passivationConfig.inactivityTimeout)
+  }
 
   override def unhandled(message: Any) {
     message match {
-      case ReceiveTimeout => context.parent ! passivationMsg
+      case ReceiveTimeout => context.parent ! passivationConfig.passivationMsg
       case _ => super.unhandled(message)
     }
   }
