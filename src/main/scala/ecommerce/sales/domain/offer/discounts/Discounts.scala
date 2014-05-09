@@ -1,6 +1,6 @@
 package ecommerce.sales.domain.offer.discounts
 
-import ecommerce.sales.domain.productscatalog.ProductData
+import ecommerce.sales.domain.inventory.ProductData
 import ecommerce.sales.domain.client.Client
 import ecommerce.sales.sharedkernel.Money
 

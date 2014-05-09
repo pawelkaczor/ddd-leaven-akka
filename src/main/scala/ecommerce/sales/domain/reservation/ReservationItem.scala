@@ -1,6 +1,6 @@
 package ecommerce.sales.domain.reservation
 
-import ecommerce.sales.domain.productscatalog.ProductData
+import ecommerce.sales.domain.inventory.ProductData
 import java.util.UUID
 import ddd.support.domain.DomainEntity
 

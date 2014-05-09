@@ -1,7 +1,7 @@
 package ecommerce.sales.domain.reservation
 
 import akka.actor.{Terminated, ActorRef, PoisonPill}
-import ecommerce.sales.domain.productscatalog.{ProductData, ProductType}
+import ecommerce.sales.domain.inventory.{ProductData, ProductType}
 import ecommerce.sales.domain.reservation.Reservation._
 import ecommerce.sales.domain.reservation.Reservation.ReserveProduct
 import ecommerce.sales.domain.reservation.Reservation.CreateReservation
@@ -78,19 +78,5 @@ class ReservationSpec extends EventsourcedAggregateRootSpec[Reservation](testSys
 
     }
   }
-
-  private def ensureActorTerminated(actor: ActorRef) = {
-    watch(actor)
-    actor ! PoisonPill
-    // wait until reservation office is terminated
-    fishForMessage(1.seconds) {
-      case Terminated(_) =>
-        unwatch(actor)
-        true
-      case _ => false
-    }
-
-  }
-
 
 }

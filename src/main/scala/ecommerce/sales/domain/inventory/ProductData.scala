@@ -1,6 +1,6 @@
-package ecommerce.sales.domain.productscatalog
+package ecommerce.sales.domain.inventory
 
-import ecommerce.sales.domain.productscatalog.ProductType._
+import ecommerce.sales.domain.inventory.ProductType._
 import java.util.Date
 import ecommerce.sales.sharedkernel.Money
 
