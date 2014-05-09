@@ -4,7 +4,6 @@ import akka.actor._
 import infrastructure.actor.{PassivationConfig, Passivate, ActorContextCreationSupport}
 import scala.reflect.ClassTag
 import akka.contrib.pattern.ClusterSharding
-import infrastructure.cluster.ShardResolution
 import scala.concurrent.duration._
 
 object Office {

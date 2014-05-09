@@ -7,7 +7,7 @@ import infrastructure.cluster.ShardResolution.ShardResolutionStrategy
 import akka.contrib.pattern.ShardRegion._
 import ecommerce.sales.domain.reservation.Reservation._
 import akka.testkit.TestProbe
-import ddd.support.domain.event.DomainEvent
+import ddd.support.domain.event.DomainEventMessage
 import scala.reflect.ClassTag
 import infrastructure.cluster.ReservationShardResolution
 
@@ -69,11 +69,11 @@ class ReservationGlobalOfficeSpec extends ReservationClusterSpec {
     r
   }
 
-  def expectEventPublished[E <: DomainEvent](implicit t: ClassTag[E]) {
+  def expectEventPublished[E](implicit t: ClassTag[E]) {
     expectEventPublished()
   }
 
-  def expectEventPublished[E <: DomainEvent](when: Unit)(implicit t: ClassTag[E]) {
+  def expectEventPublished[E](when: Unit)(implicit t: ClassTag[E]) {
     val probe = TestProbe()
     system.eventStream.subscribe(probe.ref, t.runtimeClass)
     val r = when

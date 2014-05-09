@@ -1,15 +1,40 @@
 package ddd.support.domain
 
 import akka.actor._
-import ddd.support.domain.event.DomainEvent
-import akka.persistence.EventsourcedProcessor
-import infrastructure.actor.{PassivationConfig, GracefulPassivation}
+import akka.persistence.{Persistent, Deliver, Channel, EventsourcedProcessor}
+import infrastructure.actor.GracefulPassivation
 import ddd.support.domain.protocol.Acknowledged
 import ddd.support.domain.error.AggregateRootNotInitializedException
+import AggregateRoot.Event
+import ddd.support.domain.event.{DomainEventMessage, DomainEvent}
 import akka.actor.Status.Failure
+import infrastructure.actor.PassivationConfig
+
+object AggregateRoot {
+  type Event = DomainEvent
+}
+
+trait EventPublisher extends EventsourcedProcessor {
+  def publish(event: Event)
+}
+
+trait ReliablePublishing extends EventPublisher {
+  this: AggregateRoot[_] =>
+  val publisher: ActorPath = context.system.deadLetters.path
+  val channel = context.actorOf(Channel.props("publishChannel"))
+
+  abstract override def receiveRecover: Receive = {
+    super.receiveRecover.compose(publish).asInstanceOf[Receive]
+  }
+
+  override def publish(event: Event) {
+    channel ! Deliver(Persistent(DomainEventMessage(processorId, event)), publisher)
+  }
+
+}
 
 trait AggregateState {
-  type StateMachine = PartialFunction[DomainEvent, AggregateState]
+  type StateMachine = PartialFunction[Event, AggregateState]
   def apply: StateMachine
 }
 
@@ -17,11 +42,11 @@ abstract class AggregateRootActorFactory[T <: AggregateRoot[_]] {
   def props(passivationConfig: PassivationConfig): Props
 }
 
-abstract class AggregateRoot[S <: AggregateState](override val passivationConfig: PassivationConfig)
-  extends GracefulPassivation with EventsourcedProcessor with ActorLogging {
+trait AggregateRoot[S <: AggregateState]
+  extends GracefulPassivation with EventPublisher with EventsourcedProcessor with ActorLogging {
 
-  type AggregateRootFactory = PartialFunction[DomainEvent, S]
-  type EventHandler = DomainEvent => Unit
+  type AggregateRootFactory = PartialFunction[Event, S]
+  type EventHandler = Event => Unit
   private var stateOpt: Option[S] = None
 
   val factory: AggregateRootFactory
@@ -34,15 +59,17 @@ abstract class AggregateRoot[S <: AggregateState](override val passivationConfig
   def handleCommand: Receive
 
   override def receiveRecover: Receive = {
-    case evt: DomainEvent => updateState(evt)
+    case event: Event => 
+      updateState(event)
+      publish(event) // publisher will check if event has been already published  
   }
 
-  private def updateState(event: DomainEvent) {
+  def updateState(event: Event) {
     val nextState = if (initialized) state.apply(event) else factory.apply(event)
     stateOpt = Option(nextState.asInstanceOf[S])
   }
 
-  def raise(event: DomainEvent)(implicit handler: EventHandler = handle) {
+  def raise(event: Event)(implicit handler: EventHandler = handle) {
     persist(event) {
       persistedEvent => {
         log.info("Event persisted: {}", event)
@@ -52,12 +79,12 @@ abstract class AggregateRoot[S <: AggregateState](override val passivationConfig
     }
   }
 
-  def handle(event: DomainEvent) {
+  def handle(event: Event) {
     publish(event)
     sender() ! Acknowledged
   }
 
-  def publish(event: DomainEvent) {
+  override def publish(event: Event) {
     context.system.eventStream.publish(event)
   }
 

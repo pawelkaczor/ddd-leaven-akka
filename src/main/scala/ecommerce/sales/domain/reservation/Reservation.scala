@@ -1,19 +1,25 @@
 package ecommerce.sales.domain.reservation
 
-import ddd.support.domain.event.DomainEvent
 import ReservationStatus._
 import ecommerce.sales.domain.reservation.Reservation._
-import scala.Some
-import ecommerce.sales.domain.reservation.Reservation.ProductReserved
-import ecommerce.sales.domain.reservation.Reservation.CreateReservation
-import ecommerce.sales.domain.reservation.errors.{ReservationOperationException, ReservationCreationException}
-import ecommerce.sales.domain.productscatalog.{ProductData, ProductType}
+import ecommerce.sales.domain.inventory.ProductType
 import java.util.Date
 import ecommerce.sales.sharedkernel.Money
-import ddd.support.domain.{AggregateIdResolution, AggregateRootActorFactory, AggregateState, AggregateRoot}
+import ddd.support.domain._
 import ddd.support.domain.protocol.Acknowledged
-import infrastructure.actor.PassivationConfig
 import akka.actor.Props
+import ddd.support.domain.event.DomainEvent
+import ecommerce.sales.domain.reservation.Reservation.ProductReserved
+import ecommerce.sales.domain.reservation.errors.ReservationCreationException
+import ecommerce.sales.domain.inventory.ProductData
+import ecommerce.sales.domain.reservation.Reservation.CreateReservation
+import scala.Some
+import ecommerce.sales.domain.reservation.errors.ReservationOperationException
+import ecommerce.sales.domain.reservation.Reservation.CloseReservation
+import ecommerce.sales.domain.reservation.Reservation.ReserveProduct
+import ecommerce.sales.domain.reservation.Reservation.ReservationCreated
+import ecommerce.sales.domain.reservation.Reservation.ReservationClosed
+import infrastructure.actor.PassivationConfig
 
 /**
  * Reservation is just a "wish list". System can not guarantee that user can buy desired products.</br>
@@ -49,7 +55,7 @@ object Reservation {
 
 }
 
-class Reservation(passConfig: PassivationConfig) extends AggregateRoot[State](passConfig) {
+class Reservation(override val passivationConfig: PassivationConfig) extends AggregateRoot[State] {
 
   override val factory: AggregateRootFactory = {
     case ReservationCreated(_, clientId) =>
@@ -96,7 +102,7 @@ case class State (
 
   override def apply = {
 
-    case event @ ProductReserved(_, product, quantity) =>
+    case ProductReserved(_, product, quantity) =>
       val newItems = items.find(item => item.productId == product.productId) match {
         case Some(orderLine) =>
           val index = items.indexOf(orderLine)

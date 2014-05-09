@@ -3,7 +3,7 @@ package test.support
 import akka.actor._
 import akka.testkit.{EventFilter, ImplicitSender, TestKit}
 import akka.util.Timeout
-import ddd.support.domain.event.DomainEvent
+import ddd.support.domain.event.DomainEventMessage
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, Matchers, WordSpecLike}
 import scala.concurrent.{Future, Await}
 import scala.concurrent.duration._
@@ -21,11 +21,11 @@ abstract class EventsourcedAggregateRootSpec[T](_system: ActorSystem)(implicit a
     system.awaitTermination()
   }
 
-  def expectEventPersisted[E <: DomainEvent](aggregateId: String)(when: Unit)(implicit t: ClassTag[E], idResolution: AggregateIdResolution[T]) {
+  def expectEventPersisted[E](aggregateId: String)(when: Unit)(implicit t: ClassTag[E], idResolution: AggregateIdResolution[T]) {
     expectLogMessageFromAR("Event persisted: " + t.runtimeClass.getSimpleName, when)(aggregateId)
   }
 
-  def expectEventPersisted[E <: DomainEvent](event: E)(aggregateRootId: String)(when: Unit)(implicit idResolution: AggregateIdResolution[T]) {
+  def expectEventPersisted[E](event: E)(aggregateRootId: String)(when: Unit)(implicit idResolution: AggregateIdResolution[T]) {
     expectLogMessageFromAR("Event persisted: " + event.toString, when)(aggregateRootId)
   }
 
@@ -61,6 +61,19 @@ abstract class EventsourcedAggregateRootSpec[T](_system: ActorSystem)(implicit a
     val r = when
     expectMsg(20.seconds, obj)
     r
+  }
+
+  def ensureActorTerminated(actor: ActorRef) = {
+    watch(actor)
+    actor ! PoisonPill
+    // wait until reservation office is terminated
+    fishForMessage(1.seconds) {
+      case Terminated(_) =>
+        unwatch(actor)
+        true
+      case _ => false
+    }
+
   }
 
 }
