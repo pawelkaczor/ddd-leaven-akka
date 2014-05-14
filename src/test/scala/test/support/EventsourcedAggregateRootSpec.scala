@@ -1,9 +1,8 @@
 package test.support
 
 import akka.actor._
-import akka.testkit.{EventFilter, ImplicitSender, TestKit}
+import akka.testkit.{TestProbe, EventFilter, ImplicitSender, TestKit}
 import akka.util.Timeout
-import ddd.support.domain.event.DomainEventMessage
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, Matchers, WordSpecLike}
 import scala.concurrent.{Future, Await}
 import scala.concurrent.duration._
@@ -19,6 +18,14 @@ abstract class EventsourcedAggregateRootSpec[T](_system: ActorSystem)(implicit a
   override def afterAll() {
     TestKit.shutdownActorSystem(system)
     system.awaitTermination()
+  }
+
+  def expectEventPublished[E](when: Unit)(implicit t: ClassTag[E]) {
+    val probe = TestProbe()
+    system.eventStream.subscribe(probe.ref, t.runtimeClass)
+    val r = when
+    probe.expectMsgClass(2 seconds, t.runtimeClass)
+    r
   }
 
   def expectEventPersisted[E](aggregateId: String)(when: => Unit)(implicit t: ClassTag[E], idResolution: AggregateIdResolution[T]) {
