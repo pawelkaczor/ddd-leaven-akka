@@ -7,28 +7,44 @@ import infrastructure.cluster.ShardResolution.ShardResolutionStrategy
 import akka.contrib.pattern.ShardRegion._
 import ecommerce.sales.domain.reservation.Reservation._
 import akka.testkit.TestProbe
-import ddd.support.domain.event.DomainEventMessage
 import scala.reflect.ClassTag
 import infrastructure.cluster.ReservationShardResolution
+import ddd.support.domain.AggregateRootActorFactory
+import infrastructure.actor.PassivationConfig
+import akka.actor.Props
+import test.support.{ClusterConfig, ClusterSpec, LocalPublisher}
 
 
-class ReservationGlobalOfficeSpec extends ReservationClusterSpec {
+class ReservationGlobalOfficeSpecMultiJvmNode1 extends ReservationGlobalOfficeSpec
+class ReservationGlobalOfficeSpecMultiJvmNode2 extends ReservationGlobalOfficeSpec
 
-  import ReservationClusterConfig._
+class ReservationGlobalOfficeSpec extends ClusterSpec {
+
+  import ClusterConfig._
+
+  implicit val reservationActorFactory = new ReservationActorFactory
+
+  class ReservationActorFactory extends AggregateRootActorFactory[Reservation] {
+    override def props(passivationConfig: PassivationConfig): Props = Props(new Reservation(passivationConfig) with LocalPublisher)
+  }
+
+  def registerGlobalReservationOffice() {
+    startSharding[Reservation](new ReservationShardResolution {
+      //take last char of reservationId as shard id
+      override def shardResolutionStrategy: ShardResolutionStrategy =
+        addressResolver => {
+          case msg: Msg => addressResolver(msg).last.toString
+        }
+    })
+  }
 
   "Reservation global office" must {
     "given necessary infrastructure available" in {
       setupSharedJournal()
       joinCluster()
     }
-    "given work distribution enabled" in {
-      startSharding[Reservation](new ReservationShardResolution {
-        //take last char of reservationId as shard id
-        override def shardResolutionStrategy: ShardResolutionStrategy =
-          addressResolver => {
-            case msg: Msg => addressResolver(msg).last.toString
-          }
-      })
+    "given global reservation office available" in {
+      registerGlobalReservationOffice()
     }
 
     enterBarrier("when")

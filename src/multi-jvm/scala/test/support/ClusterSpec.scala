@@ -1,24 +1,20 @@
-package ecommerce.sales.domain.reservation
+package test.support
 
 import akka.remote.testkit.MultiNodeSpec
-import test.support.STMultiNodeSpec
 import akka.testkit.ImplicitSender
 import java.io.File
-import org.apache.commons.io.FileUtils
-import akka.remote.testconductor.RoleName
-import akka.cluster.Cluster
-import akka.actor.{ActorIdentity, Identify, Props}
-import akka.persistence.journal.leveldb.{SharedLeveldbJournal, SharedLeveldbStore}
+import akka.actor.{Identify, Props, ActorIdentity}
+import akka.persistence.journal.leveldb.{SharedLeveldbStore, SharedLeveldbJournal}
 import akka.persistence.Persistence
 import infrastructure.cluster.ShardingSupport
+import akka.remote.testconductor.RoleName
+import akka.cluster.Cluster
+import org.apache.commons.io.FileUtils
 
-class ReservationGlobalOfficeSpecMultiJvmNode1 extends ReservationGlobalOfficeSpec
-class ReservationGlobalOfficeSpecMultiJvmNode2 extends ReservationGlobalOfficeSpec
-
-abstract class ReservationClusterSpec extends MultiNodeSpec(ReservationClusterConfig)
+abstract class ClusterSpec extends MultiNodeSpec(ClusterConfig)
   with STMultiNodeSpec with ImplicitSender with ShardingSupport {
 
-  import ReservationClusterConfig._
+  import ClusterConfig._
 
   def initialParticipants = roles.size
 

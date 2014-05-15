@@ -14,14 +14,9 @@ import akka.camel.CamelExtension
 import org.apache.activemq.camel.component.ActiveMQComponent.activeMQComponent
 import test.support.broker.EmbeddedBrokerTestSupport
 import ecommerce.sales.infrastructure.inventory.{InventoryQueue, InventoryListener}
+import infrastructure.akka.broker.ActiveMQMessaging
 
 class ProductReliablePublishingSpec extends EventsourcedAggregateRootSpec[Product](testSystem) with EmbeddedBrokerTestSupport {
-
-  val camel = CamelExtension(system)
-
-  val activeMQComp = activeMQComponent("nio://0.0.0.0:61616")
-  activeMQComp.setDeliveryPersistent(false)
-  camel.context.addComponent("activemq", activeMQComp)
 
   system.actorOf(Props[InventoryListener], name = "inventoryListener")
   val inventoryQueue = system.actorOf(Props[InventoryQueue], name = "inventoryQueue")

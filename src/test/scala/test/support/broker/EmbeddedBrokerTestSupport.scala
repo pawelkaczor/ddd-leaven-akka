@@ -1,8 +1,10 @@
 package test.support.broker
 
 import org.scalatest.{Suite, BeforeAndAfterAll}
+import infrastructure.akka.broker.ActiveMQMessaging
+import akka.remote.testkit.MultiNodeSpecCallbacks
 
-trait EmbeddedBrokerTestSupport extends EmbeddedBrokerRunner with BeforeAndAfterAll {
+trait EmbeddedBrokerTestSupport extends EmbeddedActiveMQRunner with ActiveMQMessaging with BeforeAndAfterAll {
   this: Suite =>
 
   override def beforeAll() {
@@ -14,4 +16,5 @@ trait EmbeddedBrokerTestSupport extends EmbeddedBrokerRunner with BeforeAndAfter
     super.afterAll()
     stopBroker()
   }
+
 }
