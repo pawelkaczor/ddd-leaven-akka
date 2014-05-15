@@ -3,12 +3,17 @@ package ecommerce.sales.domain.reservation
 import ecommerce.sales.domain.reservation.Reservation._
 import scala.concurrent.duration._
 
-import test.support.EventsourcedAggregateRootSpec
+import test.support.{LocalPublisher, EventsourcedAggregateRootSpec}
 import ddd.support.domain.Office._
 import test.support.TestConfig._
 import ddd.support.domain.protocol.Acknowledged
+import ddd.support.domain.AggregateRootActorFactory
+import infrastructure.actor.PassivationConfig
+import akka.actor.Props
 
 class ReservationInactivitySpec extends EventsourcedAggregateRootSpec[Reservation](testSystem)  {
+
+  import ReservationSpec.ReservationActorFactory
 
   "Reservation office" must {
     "passivate idle clerks" in {

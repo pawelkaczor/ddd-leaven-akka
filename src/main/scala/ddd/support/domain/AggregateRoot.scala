@@ -15,12 +15,16 @@ object AggregateRoot {
 }
 
 trait EventPublisher extends EventsourcedProcessor {
+  type TargetType
+  val target: TargetType
+
   def publish(event: Event)
 }
 
-trait ReliablePublishing extends EventPublisher {
+trait ReliablePublisher extends EventPublisher {
   this: AggregateRoot[_] =>
-  val publisher: ActorPath = context.system.deadLetters.path
+  
+  override type TargetType = ActorPath
   val channel = context.actorOf(Channel.props("publishChannel"))
 
   abstract override def receiveRecover: Receive = {
@@ -28,7 +32,7 @@ trait ReliablePublishing extends EventPublisher {
   }
 
   override def publish(event: Event) {
-    channel ! Deliver(Persistent(DomainEventMessage(processorId, event)), publisher)
+    channel ! Deliver(Persistent(DomainEventMessage(processorId, event)), target)
   }
 
 }
@@ -43,7 +47,8 @@ abstract class AggregateRootActorFactory[T <: AggregateRoot[_]] {
 }
 
 trait AggregateRoot[S <: AggregateState]
-  extends GracefulPassivation with EventPublisher with EventsourcedProcessor with ActorLogging {
+  extends GracefulPassivation with EventsourcedProcessor with ActorLogging {
+  this: EventPublisher =>
 
   type AggregateRootFactory = PartialFunction[Event, S]
   type EventHandler = Event => Unit
@@ -82,10 +87,6 @@ trait AggregateRoot[S <: AggregateState]
   def handle(event: Event) {
     publish(event)
     sender() ! Acknowledged
-  }
-
-  override def publish(event: Event) {
-    context.system.eventStream.publish(event)
   }
 
   def initialized = stateOpt.isDefined

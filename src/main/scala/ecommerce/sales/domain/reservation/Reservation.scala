@@ -30,11 +30,6 @@ import infrastructure.actor.PassivationConfig
 object Reservation {
 
   implicit val idResolution  = new ReservationIdResolution
-  implicit val actorFactory = new ReservationActorFactory
-
-  class ReservationActorFactory extends AggregateRootActorFactory[Reservation] {
-    override def props(passivationConfig: PassivationConfig): Props = Props(new Reservation(passivationConfig))
-  }
 
   class ReservationIdResolution extends AggregateIdResolution[Reservation] {
     override def aggregateIdResolver = {
@@ -55,7 +50,8 @@ object Reservation {
 
 }
 
-class Reservation(override val passivationConfig: PassivationConfig) extends AggregateRoot[State] {
+abstract class Reservation(override val passivationConfig: PassivationConfig) extends AggregateRoot[State] {
+  this: EventPublisher =>
 
   override val factory: AggregateRootFactory = {
     case ReservationCreated(_, clientId) =>

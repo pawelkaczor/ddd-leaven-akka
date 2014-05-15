@@ -1,4 +1,4 @@
-package ecommerce.sales.infrastructure
+package ecommerce.sales.infrastructure.inventory
 
 import ecommerce.system.infrastructure.events.EventMessagesConfirmableProducer
 

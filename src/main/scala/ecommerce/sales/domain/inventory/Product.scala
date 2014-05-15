@@ -11,11 +11,6 @@ import infrastructure.actor.PassivationConfig
 object Product {
 
   implicit val idResolution  = new ProductIdResolution
-  implicit val actorFactory = new ProductActorFactory
-
-  class ProductActorFactory extends AggregateRootActorFactory[Product] {
-    override def props(passivationConfig: PassivationConfig): Props = Props(new Product(passivationConfig))
-  }
 
   class ProductIdResolution extends AggregateIdResolution[Product] {
     override def aggregateIdResolver = {
@@ -33,7 +28,8 @@ object Product {
 }
 
 import Product._
-class Product(override val passivationConfig: PassivationConfig) extends AggregateRoot[ProductState] {
+abstract class Product(override val passivationConfig: PassivationConfig) extends AggregateRoot[ProductState] {
+  this: EventPublisher =>
 
   override val factory: AggregateRootFactory = {
     case ProductAdded(_, name, productType, price) =>

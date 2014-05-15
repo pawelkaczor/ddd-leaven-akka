@@ -3,27 +3,25 @@ package ecommerce.sales.domain.inventory
 import ecommerce.sales.domain.reservation.Reservation._
 import scala.concurrent.duration._
 
-import test.support.{LocalEventPublisher, EventsourcedAggregateRootSpec}
+import test.support.{EventLocalConfirmablePublisher, EventsourcedAggregateRootSpec}
 import ddd.support.domain.Office._
 import test.support.TestConfig._
 import akka.actor._
-import scala.reflect.ClassTag
-import akka.testkit.TestProbe
 import infrastructure.actor.PassivationConfig
-import ddd.support.domain.ReliablePublishing
-import ecommerce.sales.domain.inventory.Product.{AddProduct, ProductAdded, ProductActorFactory}
+import ddd.support.domain.{AggregateRootActorFactory, ReliablePublisher}
+import ecommerce.sales.domain.inventory.Product.{AddProduct, ProductAdded}
 import ecommerce.sales.sharedkernel.Money
 
 class ProductPublishingSpec extends EventsourcedAggregateRootSpec[Product](testSystem)  {
 
   def localPublisher(implicit context: ActorContext) = {
-    context.system.actorOf(Props[LocalEventPublisher], name="localEventPublisher")
+    context.system.actorOf(Props[EventLocalConfirmablePublisher], name="localEventPublisher")
   }
 
-  implicit object ProductActorFactory extends ProductActorFactory {
+  implicit object ProductActorFactory extends AggregateRootActorFactory[Product] {
     override def props(passivationConfig: PassivationConfig): Props = {
-      Props(new Product(passivationConfig) with ReliablePublishing {
-        override val publisher = localPublisher.path
+      Props(new Product(passivationConfig) with ReliablePublisher {
+        override val target = localPublisher.path
       })
     }
   }

@@ -7,13 +7,13 @@ import ddd.support.domain.Office._
 import test.support.TestConfig._
 import akka.actor._
 import infrastructure.actor.PassivationConfig
-import ddd.support.domain.ReliablePublishing
-import ecommerce.sales.domain.inventory.Product.{AddProduct, ProductAdded, ProductActorFactory}
+import ddd.support.domain.{AggregateRootActorFactory, ReliablePublisher}
+import ecommerce.sales.domain.inventory.Product.{AddProduct, ProductAdded}
 import ecommerce.sales.sharedkernel.Money
 import akka.camel.CamelExtension
 import org.apache.activemq.camel.component.ActiveMQComponent.activeMQComponent
 import test.support.broker.EmbeddedBrokerTestSupport
-import ecommerce.sales.infrastructure.{InventoryListener, InventoryQueue}
+import ecommerce.sales.infrastructure.inventory.{InventoryQueue, InventoryListener}
 
 class ProductReliablePublishingSpec extends EventsourcedAggregateRootSpec[Product](testSystem) with EmbeddedBrokerTestSupport {
 
@@ -26,10 +26,10 @@ class ProductReliablePublishingSpec extends EventsourcedAggregateRootSpec[Produc
   system.actorOf(Props[InventoryListener], name = "inventoryListener")
   val inventoryQueue = system.actorOf(Props[InventoryQueue], name = "inventoryQueue")
 
-  implicit object ProductActorFactory extends ProductActorFactory {
+  implicit object ProductActorFactory extends AggregateRootActorFactory[Product] {
     override def props(passivationConfig: PassivationConfig): Props = {
-      Props(new Product(passivationConfig) with ReliablePublishing {
-        override val publisher = inventoryQueue.path
+      Props(new Product(passivationConfig) with ReliablePublisher {
+        override val target = inventoryQueue.path
       })
     }
   }
