@@ -13,7 +13,7 @@ import ecommerce.sales.sharedkernel.Money
 import akka.camel.CamelExtension
 import org.apache.activemq.camel.component.ActiveMQComponent.activeMQComponent
 import test.support.broker.EmbeddedBrokerTestSupport
-import ecommerce.sales.infrastructure.inventory.{InventoryQueue, ProductCatalog}
+import ecommerce.sales.infrastructure.inventory.InventoryQueue
 import infrastructure.akka.broker.ActiveMQMessaging
 import ecommerce.system.infrastructure.events.EventMessageListener
 import ddd.support.domain.event.DomainEventMessage

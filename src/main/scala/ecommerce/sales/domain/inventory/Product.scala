@@ -23,7 +23,7 @@ object Product {
   case class AddProduct(productId: String, name: String, productType: ProductType, price: Money) extends Command
 
   // Events
-  case class ProductAdded(productId: String, name: String, productType: ProductType, price: Money) extends DomainEvent
+  case class ProductAdded(name: String, productType: ProductType, price: Money) extends DomainEvent
 
 }
 
@@ -32,7 +32,7 @@ abstract class Product(override val passivationConfig: PassivationConfig) extend
   this: EventPublisher =>
 
   override val factory: AggregateRootFactory = {
-    case ProductAdded(_, name, productType, price) =>
+    case ProductAdded(name, productType, price) =>
       ProductState(name, productType, price)
   }
 
@@ -42,7 +42,7 @@ abstract class Product(override val passivationConfig: PassivationConfig) extend
         if (initialized) {
           throw new InventoryOperationException(s"Product $productId already exists", productId)
         } else {
-          raise(ProductAdded(productId, name, productType, price))
+          raise(ProductAdded(name, productType, price))
         }
     }
   }

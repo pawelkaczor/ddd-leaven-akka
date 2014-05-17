@@ -4,6 +4,8 @@ import akka.actor.{ActorSystem, Props, Actor}
 import akka.camel.{CamelMessage, Consumer}
 import ddd.support.domain.event.{DomainEvent, DomainEventMessage}
 import ecommerce.sales.infrastructure.inventory.InventoryQueue
+import ddd.support.domain.AggregateRoot
+import ddd.support.domain.AggregateRoot.Event
 
 object EventMessageListener {
 
@@ -14,6 +16,7 @@ object EventMessageListener {
     system.actorOf(Props(new EventMessageListener {
       override def endpointUri = endpoint
       override def handle(eventMessage: DomainEventMessage) = handler(eventMessage)
+      override def handle(aggregateId: String, event: Event) = throw new UnsupportedOperationException
     }), name = endpointActorName)
   }
 
@@ -22,9 +25,14 @@ object EventMessageListener {
 abstract class EventMessageListener extends Actor with Consumer {
 
   override def receive: Receive = {
-    case msg @ CamelMessage(em:DomainEventMessage, _) =>
+    case CamelMessage(em:DomainEventMessage, _) =>
       handle(em)
   }
 
-  def handle(eventMessage: DomainEventMessage)
+  def handle(eventMessage: DomainEventMessage) {
+    handle(eventMessage.aggregateId, eventMessage.payload)
+  }
+
+  def handle(aggregateId: String, event: Event)
+
 }

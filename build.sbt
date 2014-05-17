@@ -23,6 +23,8 @@ val project = Project(
       "org.apache.activemq" % "activemq-camel" % "5.9.1",
       "org.apache.activemq" % "activeio-core" % "3.1.4",
       "org.apache.activemq" % "activemq-broker" % "5.9.1",
+      "com.typesafe.slick" %% "slick" % "2.0.2",
+      "com.h2database" % "h2" % "1.3.170",
       "com.typesafe.akka" %% "akka-multi-node-testkit" % akkaVersion,
       "com.github.michaelpisula" %% "akka-persistence-inmemory" % "0.1-SNAPSHOT",
       "commons-io" % "commons-io" % "2.4" % "test"),
