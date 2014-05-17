@@ -15,15 +15,19 @@ class ReservationInactivitySpec extends EventsourcedAggregateRootSpec[Reservatio
 
   import ReservationSpec.ReservationActorFactory
 
-  "Reservation office" must {
+  "Reservation office" should {
     "passivate idle clerks" in {
+      // given
       val reservationId = "reservation3"
       val reservationOffice = office[Reservation](inactivityTimeout = 50.milliseconds)
 
-      expectReply(Acknowledged) {
-        reservationOffice ! CreateReservation(reservationId, "client1")
-      }
+      // when
+      reservationOffice ! CreateReservation(reservationId, "client1")
 
+      // then
+      expectReply(Acknowledged)
+
+      // then / when
       expectLogMessageFromOffice("Passivating Actor") {
         Thread.sleep(50)
         reservationOffice ! ReserveProduct(reservationId, "product1", 1)

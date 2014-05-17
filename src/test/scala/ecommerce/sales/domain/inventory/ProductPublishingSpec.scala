@@ -18,23 +18,22 @@ class ProductPublishingSpec extends EventsourcedAggregateRootSpec[Product](testS
     context.system.actorOf(Props[EventLocalConfirmablePublisher], name="localEventPublisher")
   }
 
-  implicit object ProductActorFactory extends AggregateRootActorFactory[Product] {
-    override def props(passivationConfig: PassivationConfig): Props = {
-      Props(new Product(passivationConfig) with ReliablePublisher {
-        override val target = localPublisher.path
-      })
-    }
-  }
-
-  "New product" must {
+  "New product" should {
     "be advertised to configurable destination actor" in {
-      val productId = "product-1"
-      val inventoryOffice = office[Product]
-
-      expectEventPublished[ProductAdded] {
-        inventoryOffice ! AddProduct(productId, "product 1", ProductType.Standard, Money(10))
+      // given
+      implicit object ProductActorFactory extends AggregateRootActorFactory[Product] {
+        override def props(config: PassivationConfig): Props = {
+          Props(new Product(config) with ReliablePublisher {
+            override val target = localPublisher.path
+          })
+        }
       }
 
+      // when
+      office[Product] ! AddProduct("product-1", "product 1", ProductType.Standard, Money(10))
+      
+      // then
+      expectEventPublished[ProductAdded]
     }
   }
 

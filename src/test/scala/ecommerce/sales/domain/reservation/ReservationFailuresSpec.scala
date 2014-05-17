@@ -18,11 +18,13 @@ class ReservationFailuresSpec extends EventsourcedAggregateRootSpec[Reservation]
 
   import ReservationSpec.ReservationActorFactory
 
-  "Reservation of product" must {
+  "Reservation of product" should {
     "fail if Reservation does not exist" in {
+      // given
       val reservationId = "reservation1"
       implicit val timeout = Timeout(5, SECONDS)
 
+      // then / when
       // Use ask (?) to send a command and expect Failure(AggregateRootNotInitializedException) in the response
       expectFailure[AggregateRootNotInitializedException] {
         office[Reservation] ? ReserveProduct(reservationId, "product1", 1)

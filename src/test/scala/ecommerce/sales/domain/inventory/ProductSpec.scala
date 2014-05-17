@@ -12,7 +12,7 @@ import infrastructure.actor.PassivationConfig
 
 object ProductSpec {
   implicit object ProductActorFactory extends AggregateRootActorFactory[Product] {
-    override def props(passivationConfig: PassivationConfig): Props = Props(new Product(passivationConfig) with LocalPublisher)
+    override def props(config: PassivationConfig) = Props(new Product(config) with LocalPublisher)
   }
 }
 
@@ -29,10 +29,12 @@ class ProductSpec extends EventsourcedAggregateRootSpec[Product](testSystem)  {
     ensureActorTerminated(inventoryOffice)
   }
 
-  "Product AR" must {
+  "Product AR" should {
     "communicate outcome with events" in {
-
+      // given
       val productId = "product-1"
+
+      // then
       expectEventPersisted[ProductAdded](productId) {
         inventoryOffice ! AddProduct(productId, "product 1", ProductType.Standard, Money(10))
       }

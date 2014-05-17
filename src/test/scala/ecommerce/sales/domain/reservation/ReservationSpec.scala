@@ -37,7 +37,7 @@ class ReservationSpec extends EventsourcedAggregateRootSpec[Reservation](testSys
   }
 
 
-  "Reservation clerk" must {
+  "Reservation clerk" should {
     "communicate outcome with events" in {
       val reservationId = "reservation1"
 
@@ -65,7 +65,7 @@ class ReservationSpec extends EventsourcedAggregateRootSpec[Reservation](testSys
     }
   }
 
-  "Reservation office" must {
+  "Reservation office" should {
     "acknowledge commands" in {
       val reservationId = "reservation2"
 

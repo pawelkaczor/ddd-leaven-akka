@@ -20,19 +20,17 @@ abstract class EventsourcedAggregateRootSpec[T](_system: ActorSystem)(implicit a
     system.awaitTermination()
   }
 
-  def expectEventPublished[E](when: Unit)(implicit t: ClassTag[E]) {
+  def expectEventPublished[E](implicit t: ClassTag[E]) {
     val probe = TestProbe()
     system.eventStream.subscribe(probe.ref, t.runtimeClass)
-    val r = when
     probe.expectMsgClass(2 seconds, t.runtimeClass)
-    r
   }
 
   def expectEventPersisted[E](aggregateId: String)(when: => Unit)(implicit t: ClassTag[E], idResolution: AggregateIdResolution[T]) {
     expectLogMessageFromAR("Event persisted: " + t.runtimeClass.getSimpleName, when)(aggregateId)
   }
 
-  def expectEventPersisted[E](event: E)(aggregateRootId: String)(when: ⇒ Unit)(implicit idResolution: AggregateIdResolution[T]) {
+  def expectEventPersisted[E](event: E)(aggregateRootId: String)(when: => Unit)(implicit idResolution: AggregateIdResolution[T]) {
     expectLogMessageFromAR("Event persisted: " + event.toString, when)(aggregateRootId)
   }
 
@@ -64,10 +62,8 @@ abstract class EventsourcedAggregateRootSpec[T](_system: ActorSystem)(implicit a
     }
   }
 
-  def expectReply[O, R](obj: O)(when: => R): R = {
-    val r = when
+  def expectReply[O](obj: O) {
     expectMsg(20.seconds, obj)
-    r
   }
 
   def ensureActorTerminated(actor: ActorRef) = {
