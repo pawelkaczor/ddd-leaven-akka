@@ -7,13 +7,13 @@ import ecommerce.sales.infrastructure.inventory.InventoryQueue
 import ddd.support.domain.AggregateRoot
 import ddd.support.domain.AggregateRoot.Event
 
-object EventMessageListener {
+object EventListener {
 
   def apply(endpoint: String)(handler: DomainEventMessage => Unit)(implicit system: ActorSystem) = {
 
     val endpointActorName = s"${endpoint.split(':').last}Listener"
 
-    system.actorOf(Props(new EventMessageListener {
+    system.actorOf(Props(new EventListener {
       override def endpointUri = endpoint
       override def handle(eventMessage: DomainEventMessage) = handler(eventMessage)
       override def handle(aggregateId: String, event: Event) = throw new UnsupportedOperationException
@@ -22,7 +22,7 @@ object EventMessageListener {
 
 }
 
-abstract class EventMessageListener extends Actor with Consumer {
+abstract class EventListener extends Actor with Consumer {
 
   override def receive: Receive = {
     case CamelMessage(em:DomainEventMessage, _) =>

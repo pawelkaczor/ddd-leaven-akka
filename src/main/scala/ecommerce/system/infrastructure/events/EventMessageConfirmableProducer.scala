@@ -5,9 +5,9 @@ import akka.camel.{CamelMessage, Oneway, Producer}
 import infrastructure.akka.SerializationSupport
 import akka.persistence.{Persistent, ConfirmablePersistent}
 import ddd.support.domain.event.EventMessage
-import EventMessagesConfirmableProducer._
+import EventMessageConfirmableProducer._
 
-object EventMessagesConfirmableProducer {
+object EventMessageConfirmableProducer {
   val ConfirmableInfo = "ConfirmableInfo"
 }
 
@@ -15,7 +15,7 @@ object EventMessagesConfirmableProducer {
  * Forwards payloads (of type EventMessage) of incoming ConfirmablePersistent messages to defined endpoint.
  * Confirms to sender once event message is delivered to endpoint.
  */
-abstract class EventMessagesConfirmableProducer extends Actor with Producer with Oneway with SerializationSupport {
+abstract class EventMessageConfirmableProducer extends Actor with Producer with Oneway with SerializationSupport {
 
   override def transformOutgoingMessage(msg: Any): Any = msg match {
     case cp:ConfirmablePersistent => unwrapEventMessage(cp)
