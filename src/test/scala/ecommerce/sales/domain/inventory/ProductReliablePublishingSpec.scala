@@ -10,13 +10,9 @@ import infrastructure.actor.PassivationConfig
 import ddd.support.domain.{AggregateRootActorFactory, ReliablePublisher}
 import ecommerce.sales.domain.inventory.Product.{AddProduct, ProductAdded}
 import ecommerce.sales.sharedkernel.Money
-import akka.camel.CamelExtension
-import org.apache.activemq.camel.component.ActiveMQComponent.activeMQComponent
 import test.support.broker.EmbeddedBrokerTestSupport
 import ecommerce.sales.infrastructure.inventory.InventoryQueue
-import infrastructure.akka.broker.ActiveMQMessaging
-import ecommerce.system.infrastructure.events.EventMessageListener
-import ddd.support.domain.event.DomainEventMessage
+import ecommerce.system.infrastructure.events.EventListener
 
 class ProductReliablePublishingSpec extends EventsourcedAggregateRootSpec[Product](testSystem) with EmbeddedBrokerTestSupport {
 
@@ -33,7 +29,7 @@ class ProductReliablePublishingSpec extends EventsourcedAggregateRootSpec[Produc
         }
       }
 
-      EventMessageListener(InventoryQueue.EndpointUri) {
+      EventListener(InventoryQueue.EndpointUri) {
         eventMessage => system.eventStream.publish(eventMessage.payload)
       }
 

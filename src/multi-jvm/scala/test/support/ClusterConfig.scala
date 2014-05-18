@@ -18,5 +18,5 @@ object ClusterConfig extends MultiNodeConfig {
       dir = "target/test-shared-journal"
     }
     akka.persistence.snapshot-store.local.dir = "target/test-snapshots"
-                                         """))
+                                         """).withFallback(ConfigFactory.load()))
 }
