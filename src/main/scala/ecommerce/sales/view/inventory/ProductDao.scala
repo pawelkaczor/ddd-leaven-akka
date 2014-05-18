@@ -1,12 +1,22 @@
 package ecommerce.sales.view.inventory
 
-import ecommerce.sales.domain.inventory.ProductData
+import ecommerce.sales.domain.inventory.{ProductType, ProductData}
 import infrastructure.view.Profile
+import ecommerce.sales.sharedkernel.Money
+import java.util.Currency
 
 trait ProductDao extends Profile {
   import profile.simple._
 
-  case class Product(id: String, name: String, pType: String, price: BigDecimal, currency: String)
+  object Product extends ((String, String, String, BigDecimal, String) => Product){
+    def apply(pd: ProductData) =
+      new Product(pd.productId, pd.name, pd.productType.toString, pd.price.value, pd.price.currencyCode)
+  }
+
+  case class Product(id: String, name: String, pType: String, price: BigDecimal, currency: String) {
+    def productData =
+      ProductData(id, name, ProductType.withName(pType), Money(price, Currency.getInstance(currency)))
+  }
   
   class Products(tag: Tag) extends Table[Product](tag, "PRODUCTS") {
     def id = column[String]("ID", O.PrimaryKey)
@@ -19,8 +29,21 @@ trait ProductDao extends Profile {
   val products = TableQuery[Products]
 
   def insert(pd: ProductData)(implicit session: Session) {
-    val p = Product(pd.productId, pd.name, pd.productType.toString, pd.price.value, pd.price.currencyCode)
-    products.insert(p)
+    products.insert(Product(pd))
   }
 
+
+  def productById(id: String)(implicit session: Session): Option[ProductData] = {
+    //insert(ProductData(id, "product 1", ProductType.Standard, Money(10)))
+    productByIdCompiled(id).run.headOption.map(p => p.productData)
+  }
+
+  val productByIdCompiled = {
+    def query(productId: Column[String]) =
+      for {
+        p <- products if p.id === productId
+      } yield p
+
+    Compiled(query _)
+  }
 }

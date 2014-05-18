@@ -32,7 +32,7 @@ trait ReliablePublisher extends EventPublisher {
   }
 
   override def publish(event: Event) {
-    channel ! Deliver(Persistent(DomainEventMessage(processorId, event)), target)
+    channel ! Deliver(Persistent(DomainEventMessage(aggregateId, event)), target)
   }
 
 }
@@ -55,6 +55,8 @@ trait AggregateRoot[S <: AggregateState]
   private var stateOpt: Option[S] = None
 
   val factory: AggregateRootFactory
+
+  def aggregateId = processorId.split('/').last
 
   override def receiveCommand: Receive = {
     case msg =>
