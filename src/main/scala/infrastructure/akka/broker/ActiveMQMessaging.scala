@@ -3,7 +3,7 @@ package infrastructure.akka.broker
 import akka.actor.ActorSystem
 import org.apache.activemq.camel.component.ActiveMQComponent._
 import akka.camel.CamelExtension
-import infrastructure.Settings
+import infrastructure.EcommerceSettings
 
 /**
  * Allows messages to be sent to a JMS Queue or Topic
@@ -12,7 +12,7 @@ import infrastructure.Settings
  */
 trait ActiveMQMessaging {
   val system: ActorSystem
-  val settings = Settings(system)
+  val settings: EcommerceSettings
 
   val camel = CamelExtension(system)
   val activeMQComp = activeMQComponent(settings.BrokerUrl)

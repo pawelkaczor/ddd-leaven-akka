@@ -1,7 +1,7 @@
 package test.support.broker
 
 import org.apache.activemq.broker.BrokerService
-import infrastructure.Settings
+import infrastructure.EcommerceSettings
 import akka.actor.ActorSystem
 import java.io.IOException
 
@@ -13,7 +13,7 @@ trait EmbeddedActiveMQRunner{
 
   def startBroker(retry: Int = 0) {
     try {
-      broker.addConnector(Settings(system).BrokerUrl)
+      broker.addConnector(EcommerceSettings(system).BrokerUrl)
       broker.start()
       broker.waitUntilStarted()
     } catch {
