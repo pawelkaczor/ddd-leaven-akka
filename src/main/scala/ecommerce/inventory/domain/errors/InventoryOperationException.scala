@@ -1,4 +1,4 @@
-package ecommerce.sales.domain.inventory.errors
+package ecommerce.inventory.domain.errors
 
 import ddd.support.domain.error.DomainException
 

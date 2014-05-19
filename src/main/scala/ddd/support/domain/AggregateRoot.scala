@@ -50,13 +50,15 @@ trait AggregateRoot[S <: AggregateState]
   extends GracefulPassivation with EventsourcedProcessor with ActorLogging {
   this: EventPublisher =>
 
+  override def processorId: String = aggregateId
+
   type AggregateRootFactory = PartialFunction[Event, S]
   type EventHandler = Event => Unit
   private var stateOpt: Option[S] = None
 
   val factory: AggregateRootFactory
 
-  def aggregateId = processorId.split('/').last
+  def aggregateId = self.path.name
 
   override def receiveCommand: Receive = {
     case msg =>

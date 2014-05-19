@@ -2,16 +2,13 @@ package ecommerce.sales.domain.reservation
 
 import ReservationStatus._
 import ecommerce.sales.domain.reservation.Reservation._
-import ecommerce.sales.domain.inventory.ProductType
 import java.util.Date
-import ecommerce.sales.sharedkernel.Money
+import ecommerce.sales.sharedkernel.{ProductType, Money}
 import ddd.support.domain._
 import ddd.support.domain.protocol.Acknowledged
-import akka.actor.Props
 import ddd.support.domain.event.DomainEvent
 import ecommerce.sales.domain.reservation.Reservation.ProductReserved
 import ecommerce.sales.domain.reservation.errors.ReservationCreationException
-import ecommerce.sales.domain.inventory.ProductData
 import ecommerce.sales.domain.reservation.Reservation.CreateReservation
 import scala.Some
 import ecommerce.sales.domain.reservation.errors.ReservationOperationException
@@ -20,6 +17,7 @@ import ecommerce.sales.domain.reservation.Reservation.ReserveProduct
 import ecommerce.sales.domain.reservation.Reservation.ReservationCreated
 import ecommerce.sales.domain.reservation.Reservation.ReservationClosed
 import infrastructure.actor.PassivationConfig
+import ecommerce.sales.domain.product.Product
 
 /**
  * Reservation is just a "wish list". System can not guarantee that user can buy desired products.</br>
@@ -28,6 +26,8 @@ import infrastructure.actor.PassivationConfig
  *
  */
 object Reservation {
+
+  def processorId(aggregateId: String) = "Reservations/" + aggregateId
 
   implicit val idResolution  = new ReservationIdResolution
 
@@ -45,13 +45,15 @@ object Reservation {
 
   // Events
   case class ReservationCreated(reservationId: String, clientId: String) extends DomainEvent
-  case class ProductReserved(reservationId: String, product: ProductData, quantity: Int) extends DomainEvent
+  case class ProductReserved(reservationId: String, product: Product, quantity: Int) extends DomainEvent
   case class ReservationClosed(reservationId: String) extends DomainEvent
 
 }
 
 abstract class Reservation(override val passivationConfig: PassivationConfig) extends AggregateRoot[State] {
   this: EventPublisher =>
+
+  override def processorId = Reservation.processorId(aggregateId)
 
   override val factory: AggregateRootFactory = {
     case ReservationCreated(_, clientId) =>
@@ -74,7 +76,7 @@ abstract class Reservation(override val passivationConfig: PassivationConfig) ex
         } else {
           // TODO fetch product detail
           // TODO fetch price for the client
-          val product = ProductData(productId, "productName", ProductType.Standard, Money(10))
+          val product = Product(productId, "productName", ProductType.Standard, Some(Money(10)))
           raise(ProductReserved(reservationId, product, quantity)) { event =>
             // customized handling of ProductReserved
             publish(event)

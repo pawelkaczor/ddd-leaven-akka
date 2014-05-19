@@ -1,7 +1,6 @@
-package ecommerce.sales.domain.inventory
+package ecommerce.inventory.domain.product
 
 import ecommerce.sales.domain.reservation.Reservation._
-import scala.concurrent.duration._
 
 import test.support.{EventLocalConfirmablePublisher, EventsourcedAggregateRootSpec}
 import ddd.support.domain.Office._
@@ -9,8 +8,9 @@ import test.support.TestConfig._
 import akka.actor._
 import infrastructure.actor.PassivationConfig
 import ddd.support.domain.{AggregateRootActorFactory, ReliablePublisher}
-import ecommerce.sales.domain.inventory.Product.{AddProduct, ProductAdded}
-import ecommerce.sales.sharedkernel.Money
+import ecommerce.inventory.domain.Product.{AddProduct, ProductAdded}
+import ecommerce.sales.sharedkernel.ProductType
+import ecommerce.inventory.domain.Product
 
 class ProductPublishingSpec extends EventsourcedAggregateRootSpec[Product](testSystem)  {
 
@@ -30,7 +30,7 @@ class ProductPublishingSpec extends EventsourcedAggregateRootSpec[Product](testS
       }
 
       // when
-      office[Product] ! AddProduct("product-1", "product 1", ProductType.Standard, Money(10))
+      office[Product] ! AddProduct("product-1", "product 1", ProductType.Standard)
       
       // then
       expectEventPublished[ProductAdded]

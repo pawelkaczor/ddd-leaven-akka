@@ -1,12 +1,13 @@
-package ecommerce.sales.domain.inventory
+package ecommerce.sales.domain.product
 
-import ecommerce.sales.domain.inventory.ProductType._
+import ecommerce.sales.sharedkernel.ProductType
+import ProductType._
 import java.util.Date
 import ecommerce.sales.sharedkernel.Money
 
-case class ProductData(
+case class Product(
   productId: String,
   name: String,
   productType: ProductType,
-  price: Money,
+  price: Option[Money],
   snapshotDate: Date = new Date)

@@ -1,4 +1,4 @@
-package ecommerce.sales.domain.inventory
+package ecommerce.integration
 
 import scala.concurrent.duration._
 import ddd.support.domain.Office._
@@ -6,19 +6,20 @@ import scala.reflect.ClassTag
 import ddd.support.domain.{ReliablePublisher, AggregateRootActorFactory}
 import akka.actor.Props
 import test.support.{ClusterConfig, ClusterSpec}
-import ecommerce.sales.sharedkernel.Money
-import ecommerce.sales.infrastructure.inventory.InventoryQueue
+import ecommerce.sales.sharedkernel.ProductType
 import test.support.broker.EmbeddedBrokerTestSupport
 import ClusterConfig._
 import infrastructure.akka.broker.ActiveMQMessaging
-import ecommerce.sales.view.inventory.ProductCatalog
 import test.support.view.{Daos, ViewsTestSupport}
 import scala.slick.driver.H2Driver
-import ecommerce.sales.domain.inventory.Product.AddProduct
+import ecommerce.inventory.domain.Product.AddProduct
+import ecommerce.inventory.domain.Product
 import infrastructure.actor.PassivationConfig
 import ddd.support.domain.protocol.Acknowledged
 import infrastructure.view.ViewDatabase
 import infrastructure.EcommerceSettings
+import ecommerce.inventory.integration.InventoryQueue
+import ecommerce.sales.service.ProductCatalog
 
 class EventsPublishingClusterSpecMultiJvmNode1
   extends EventsPublishingClusterSpec with EmbeddedBrokerTestSupport
@@ -55,10 +56,10 @@ class EventsPublishingClusterSpec extends ClusterSpec with ViewDatabase {
     "be delivered to Product Catalog" in {
       on(node1) {
           val inventoryOffice = globalOffice[Product]
-          inventoryOffice ! AddProduct("product-1", "product 1", ProductType.Standard, Money(10))
+          inventoryOffice ! AddProduct("product-1", "product 1", ProductType.Standard)
           expectReply(Acknowledged)
 
-          inventoryOffice ! AddProduct("product-2", "product 2", ProductType.Standard, Money(10))
+          inventoryOffice ! AddProduct("product-2", "product 2", ProductType.Standard)
           expectReply(Acknowledged)
 
           enterBarrier("events published")
@@ -72,10 +73,10 @@ class EventsPublishingClusterSpec extends ClusterSpec with ViewDatabase {
 
         Thread.sleep(1000) // ProductCatalog must read events from InventoryQueue
         productCatalog ! ProductCatalog.GetProduct("product-1")
-        expectReply[Some[ProductData]]
+        expectReply[Some[Product]]
 
         productCatalog ! ProductCatalog.GetProduct("product-2")
-        expectReply[Some[ProductData]]
+        expectReply[Some[Product]]
 
       }
     }

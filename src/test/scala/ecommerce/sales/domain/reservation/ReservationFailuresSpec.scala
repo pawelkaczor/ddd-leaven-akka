@@ -9,10 +9,10 @@ import ddd.support.domain.error.AggregateRootNotInitializedException
 import ddd.support.domain.Office._
 import test.support.TestConfig._
 import ddd.support.domain.AggregateRootActorFactory
-import ecommerce.sales.domain.inventory.Product
 import scala.Product
 import infrastructure.actor.PassivationConfig
 import akka.actor.Props
+import ecommerce.sales.domain.product.Product
 
 class ReservationFailuresSpec extends EventsourcedAggregateRootSpec[Reservation](testSystem) {
 

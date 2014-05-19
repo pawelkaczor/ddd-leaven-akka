@@ -1,4 +1,4 @@
-package ecommerce.sales.domain.inventory
+package ecommerce.sales.sharedkernel
 
 object ProductType extends Enumeration {
   type ProductType = Value

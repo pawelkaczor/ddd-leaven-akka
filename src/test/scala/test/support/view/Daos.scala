@@ -1,8 +1,8 @@
 package test.support.view
 
 import scala.slick.driver.JdbcProfile
-import ecommerce.sales.view.inventory.ProductDao
 import infrastructure.view.Profile
+import ecommerce.sales.service.ProductDao
 
 class Daos(override val profile: JdbcProfile) extends ProductDao with Profile {
   import profile.simple._

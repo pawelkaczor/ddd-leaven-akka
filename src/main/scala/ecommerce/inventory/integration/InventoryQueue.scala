@@ -1,7 +1,6 @@
-package ecommerce.sales.infrastructure.inventory
+package ecommerce.inventory.integration
 
 import ecommerce.system.infrastructure.events.EventMessageConfirmableProducer
-import ecommerce.sales.infrastructure.inventory.InventoryQueue.EndpointUri
 import akka.actor.Props
 
 object InventoryQueue {
@@ -12,5 +11,5 @@ object InventoryQueue {
 }
 
 class InventoryQueue extends EventMessageConfirmableProducer {
-  override def endpointUri = EndpointUri
+  override def endpointUri = InventoryQueue.EndpointUri
 }

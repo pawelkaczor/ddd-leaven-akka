@@ -2,8 +2,8 @@ package infrastructure
 
 import ecommerce.sales.domain.reservation.Reservation.ReservationIdResolution
 import ecommerce.sales.domain.reservation.Reservation
-import ecommerce.sales.domain.inventory.Product.ProductIdResolution
-import ecommerce.sales.domain.inventory.Product
+import ecommerce.inventory.domain.Product.ProductIdResolution
+import ecommerce.inventory.domain.Product
 
 package object cluster {
 

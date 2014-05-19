@@ -1,14 +1,15 @@
-package ecommerce.sales.domain.inventory
+package ecommerce.inventory.domain.product
 
 import akka.actor.{Props, ActorRef}
 import ecommerce.sales.domain.reservation.Reservation._
 import test.support.{LocalPublisher, EventsourcedAggregateRootSpec}
 import ddd.support.domain.Office._
 import test.support.TestConfig._
-import ecommerce.sales.domain.inventory.Product.{AddProduct, ProductAdded}
-import ecommerce.sales.sharedkernel.Money
+import ecommerce.inventory.domain.Product.{AddProduct, ProductAdded}
+import ecommerce.sales.sharedkernel.ProductType
 import ddd.support.domain.AggregateRootActorFactory
 import infrastructure.actor.PassivationConfig
+import ecommerce.inventory.domain.Product
 
 object ProductSpec {
   implicit object ProductActorFactory extends AggregateRootActorFactory[Product] {
@@ -36,7 +37,7 @@ class ProductSpec extends EventsourcedAggregateRootSpec[Product](testSystem)  {
 
       // then
       expectEventPersisted[ProductAdded](productId) {
-        inventoryOffice ! AddProduct(productId, "product 1", ProductType.Standard, Money(10))
+        inventoryOffice ! AddProduct(productId, "product 1", ProductType.Standard)
       }
     }
   }

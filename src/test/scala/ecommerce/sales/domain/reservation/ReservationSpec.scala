@@ -1,20 +1,21 @@
 package ecommerce.sales.domain.reservation
 
 import akka.actor.{Props, Terminated, ActorRef, PoisonPill}
-import ecommerce.sales.domain.inventory.{ProductData, ProductType}
 import ecommerce.sales.domain.reservation.Reservation._
 import ecommerce.sales.domain.reservation.Reservation.ReserveProduct
 import ecommerce.sales.domain.reservation.Reservation.CreateReservation
 import ecommerce.sales.domain.reservation.Reservation.ReservationCreated
 import ecommerce.sales.domain.reservation.Reservation.ProductReserved
 
-import ecommerce.sales.sharedkernel.Money
+import ecommerce.sales.sharedkernel.{ProductType, Money}
 import test.support.{LocalPublisher, EventsourcedAggregateRootSpec}
 import ddd.support.domain.Office._
 import test.support.TestConfig._
 import ddd.support.domain.protocol.Acknowledged
 import ddd.support.domain.AggregateRootActorFactory
 import infrastructure.actor.PassivationConfig
+import ecommerce.sales.domain.product.Product
+import scala.Product
 
 object ReservationSpec {
   implicit object ReservationActorFactory extends AggregateRootActorFactory[Reservation] {
@@ -52,7 +53,7 @@ class ReservationSpec extends EventsourcedAggregateRootSpec[Reservation](testSys
       ensureActorTerminated(reservationOffice)
       reservationOffice = office[Reservation]
 
-      val product2 = ProductData("product2", "productName", ProductType.Standard, Money(10))
+      val product2 = Product("product2", "productName", ProductType.Standard, Some(Money(10)))
       val quantity= 1
       expectEventPersisted(ProductReserved(reservationId, product2, quantity))(reservationId) {
         reservationOffice ! ReserveProduct(reservationId, "product2", quantity)

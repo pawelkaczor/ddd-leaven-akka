@@ -1,4 +1,4 @@
-package ecommerce.sales.domain.inventory
+package ecommerce.inventory.domain.product
 
 import ecommerce.sales.domain.reservation.Reservation._
 
@@ -8,11 +8,12 @@ import test.support.TestConfig._
 import akka.actor._
 import infrastructure.actor.PassivationConfig
 import ddd.support.domain.{AggregateRootActorFactory, ReliablePublisher}
-import ecommerce.sales.domain.inventory.Product.{AddProduct, ProductAdded}
-import ecommerce.sales.sharedkernel.Money
+import ecommerce.inventory.domain.Product.{AddProduct, ProductAdded}
+import ecommerce.sales.sharedkernel.ProductType
 import test.support.broker.EmbeddedBrokerTestSupport
-import ecommerce.sales.infrastructure.inventory.InventoryQueue
 import ecommerce.system.infrastructure.events.EventListener
+import ecommerce.inventory.integration.InventoryQueue
+import ecommerce.inventory.domain.Product
 
 class ProductReliablePublishingSpec extends EventsourcedAggregateRootSpec[Product](testSystem) with EmbeddedBrokerTestSupport {
 
@@ -34,7 +35,7 @@ class ProductReliablePublishingSpec extends EventsourcedAggregateRootSpec[Produc
       }
 
       // when
-      office[Product] ! AddProduct("product-1", "product 1", ProductType.Standard, Money(10))
+      office[Product] ! AddProduct("product-1", "product 1", ProductType.Standard)
 
       // then
       expectEventPublished[ProductAdded]

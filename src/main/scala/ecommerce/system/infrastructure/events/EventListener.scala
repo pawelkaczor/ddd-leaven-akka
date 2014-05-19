@@ -2,9 +2,7 @@ package ecommerce.system.infrastructure.events
 
 import akka.actor.{ActorSystem, Props, Actor}
 import akka.camel.{CamelMessage, Consumer}
-import ddd.support.domain.event.{DomainEvent, DomainEventMessage}
-import ecommerce.sales.infrastructure.inventory.InventoryQueue
-import ddd.support.domain.AggregateRoot
+import ddd.support.domain.event.DomainEventMessage
 import ddd.support.domain.AggregateRoot.Event
 
 object EventListener {
