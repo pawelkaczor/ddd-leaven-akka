@@ -2,7 +2,6 @@ package test.support.broker
 
 import org.scalatest.{Suite, BeforeAndAfterAll}
 import infrastructure.akka.broker.ActiveMQMessaging
-import akka.remote.testkit.MultiNodeSpecCallbacks
 
 trait EmbeddedBrokerTestSupport extends EmbeddedActiveMQRunner with ActiveMQMessaging with BeforeAndAfterAll {
   this: Suite =>

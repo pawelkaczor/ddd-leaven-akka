@@ -6,13 +6,16 @@ import akka.util.Timeout
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, Matchers, WordSpecLike}
 import scala.concurrent.{Future, Await}
 import scala.concurrent.duration._
-import scala.util.Failure
 import scala.reflect.ClassTag
 import ddd.support.domain.AggregateIdResolution
+import scala.util.Failure
+import akka.actor.Terminated
+import infrastructure.EcommerceSettings
 
 abstract class EventsourcedAggregateRootSpec[T](_system: ActorSystem)(implicit arClassTag: ClassTag[T]) extends TestKit(_system)
   with ImplicitSender with WordSpecLike with Matchers with BeforeAndAfterAll with BeforeAndAfter {
 
+  val settings = EcommerceSettings(system)
   val domain = arClassTag.runtimeClass.getSimpleName
 
   override def afterAll() {

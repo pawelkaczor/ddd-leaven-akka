@@ -12,9 +12,10 @@ import infrastructure.EcommerceSettings
  */
 trait ActiveMQMessaging {
   val system: ActorSystem
+  val settings: EcommerceSettings
 
   val camel = CamelExtension(system)
-  val activeMQComp = activeMQComponent(EcommerceSettings(system).BrokerUrl)
+  val activeMQComp = activeMQComponent(settings.BrokerUrl)
 
   camel.context.addComponent("activemq", activeMQComp)
 
