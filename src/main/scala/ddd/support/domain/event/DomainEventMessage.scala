@@ -1,7 +1,6 @@
 package ddd.support.domain.event
 
 import java.util.{UUID, Date}
-import ddd.support.domain.AggregateRoot
 import ddd.support.domain.AggregateRoot.Event
 
 case class DomainEventMessage(

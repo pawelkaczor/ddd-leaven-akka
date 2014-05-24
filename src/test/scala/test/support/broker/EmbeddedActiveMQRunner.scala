@@ -2,7 +2,6 @@ package test.support.broker
 
 import org.apache.activemq.broker.BrokerService
 import infrastructure.EcommerceSettings
-import akka.actor.ActorSystem
 import java.io.IOException
 
 trait EmbeddedActiveMQRunner{

@@ -1,17 +1,14 @@
 package test.support
 
-import ddd.support.domain.{AggregateRoot, EventPublisher}
 import ddd.support.domain.AggregateRoot.Event
-import akka.event.EventBus
+import ddd.support.domain.event.EventPublisher
+import akka.actor.Actor
 
 trait LocalPublisher extends EventPublisher {
-  this: AggregateRoot[_] =>
-
-  type TargetType = EventBus
-  override val target = context.system.eventStream
+  this: Actor =>
 
   override def publish(event: Event) {
-    target.publish(event.asInstanceOf[target.Event])
+    context.system.eventStream.publish(event)
   }
 
 }

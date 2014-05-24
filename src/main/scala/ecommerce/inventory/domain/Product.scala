@@ -3,7 +3,7 @@ package ecommerce.inventory.domain
 import ecommerce.sales.sharedkernel.ProductType
 import ProductType.ProductType
 import ddd.support.domain._
-import ddd.support.domain.event.DomainEvent
+import ddd.support.domain.event.{EventPublisher, DomainEvent}
 import ecommerce.inventory.domain.errors.InventoryOperationException
 import infrastructure.actor.PassivationConfig
 
@@ -40,14 +40,12 @@ abstract class Product(override val passivationConfig: PassivationConfig) extend
   }
 
   override def handleCommand: Receive = {
-    case cmd: Command => cmd match {
-      case AddProduct(productId, name, productType) =>
-        if (initialized) {
-          throw new InventoryOperationException(s"Product $productId already exists", productId)
-        } else {
-          raise(ProductAdded(name, productType))
-        }
-    }
+    case AddProduct(productId, name, productType) =>
+      if (initialized) {
+        throw new InventoryOperationException(s"Product $productId already exists", productId)
+      } else {
+        raise(ProductAdded(name, productType))
+      }
   }
 
 }

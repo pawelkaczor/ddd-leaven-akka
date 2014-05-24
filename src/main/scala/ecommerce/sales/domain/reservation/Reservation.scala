@@ -1,12 +1,10 @@
 package ecommerce.sales.domain.reservation
 
 import ReservationStatus._
-import ecommerce.sales.domain.reservation.Reservation._
 import java.util.Date
 import ecommerce.sales.sharedkernel.{ProductType, Money}
 import ddd.support.domain._
-import ddd.support.domain.protocol.Acknowledged
-import ddd.support.domain.event.DomainEvent
+import ddd.support.domain.event.{EventPublisher, DomainEvent}
 import ecommerce.sales.domain.reservation.Reservation.ProductReserved
 import ecommerce.sales.domain.reservation.errors.ReservationCreationException
 import ecommerce.sales.domain.reservation.Reservation.CreateReservation
@@ -61,8 +59,6 @@ abstract class Reservation(override val passivationConfig: PassivationConfig) ex
   }
 
   override def handleCommand: Receive = {
-    case cmd: Command => cmd match {
-
       case CreateReservation(reservationId, clientId) =>
         if (initialized) {
           throw new ReservationCreationException(s"Reservation $reservationId already exists")
@@ -77,16 +73,11 @@ abstract class Reservation(override val passivationConfig: PassivationConfig) ex
           // TODO fetch product detail
           // TODO fetch price for the client
           val product = Product(productId, "productName", ProductType.Standard, Some(Money(10)))
-          raise(ProductReserved(reservationId, product, quantity)) { event =>
-            // customized handling of ProductReserved
-            publish(event)
-            sender() ! Acknowledged
-          }
+          raise(ProductReserved(reservationId, product, quantity))
         }
 
       case CloseReservation(reservationId) =>
         raise(ReservationClosed(reservationId))
-    }
   }
 
 }

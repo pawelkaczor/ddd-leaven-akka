@@ -1,6 +1,6 @@
 package ecommerce.sales.domain.reservation
 
-import akka.actor.{Props, Terminated, ActorRef, PoisonPill}
+import akka.actor.{Props, ActorRef}
 import ecommerce.sales.domain.reservation.Reservation._
 import ecommerce.sales.domain.reservation.Reservation.ReserveProduct
 import ecommerce.sales.domain.reservation.Reservation.CreateReservation
@@ -15,7 +15,6 @@ import ddd.support.domain.protocol.Acknowledged
 import ddd.support.domain.AggregateRootActorFactory
 import infrastructure.actor.PassivationConfig
 import ecommerce.sales.domain.product.Product
-import scala.Product
 
 object ReservationSpec {
   implicit object ReservationActorFactory extends AggregateRootActorFactory[Reservation] {

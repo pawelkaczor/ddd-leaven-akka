@@ -3,7 +3,7 @@ package ecommerce.integration
 import scala.concurrent.duration._
 import ddd.support.domain.Office._
 import scala.reflect.ClassTag
-import ddd.support.domain.{ReliablePublisher, AggregateRootActorFactory}
+import ddd.support.domain.AggregateRootActorFactory
 import akka.actor.Props
 import test.support.{ClusterConfig, ClusterSpec}
 import ecommerce.sales.sharedkernel.ProductType
@@ -20,6 +20,7 @@ import infrastructure.view.ViewDatabase
 import infrastructure.EcommerceSettings
 import ecommerce.inventory.integration.InventoryQueue
 import ecommerce.sales.service.ProductCatalog
+import infrastructure.akka.event.ReliablePublisher
 
 class EventsPublishingClusterSpecMultiJvmNode1
   extends EventsPublishingClusterSpec with EmbeddedBrokerTestSupport

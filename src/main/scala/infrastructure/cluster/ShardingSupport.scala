@@ -1,7 +1,7 @@
 package infrastructure.cluster
 
 import scala.reflect.ClassTag
-import akka.actor.{PoisonPill, Props, ActorSystem}
+import akka.actor.{PoisonPill, ActorSystem}
 import akka.contrib.pattern.ClusterSharding
 import scala.Some
 import akka.contrib.pattern.ShardRegion.Passivate
