@@ -1,11 +1,12 @@
 package ecommerce.system.infrastructure.events
 
 import akka.actor.Actor
-import akka.camel.{CamelMessage, Oneway, Producer}
+import akka.camel.{CamelMessage, Producer}
 import infrastructure.akka.SerializationSupport
 import akka.persistence.{Persistent, ConfirmablePersistent}
 import ddd.support.domain.event.EventMessage
 import EventMessageConfirmableProducer._
+import ddd.support.domain.protocol.Acknowledged
 
 object EventMessageConfirmableProducer {
   val ConfirmableInfo = "ConfirmableInfo"
@@ -15,7 +16,7 @@ object EventMessageConfirmableProducer {
  * Forwards payloads (of type EventMessage) of incoming ConfirmablePersistent messages to defined endpoint.
  * Confirms to sender once event message is delivered to endpoint.
  */
-abstract class EventMessageConfirmableProducer extends Actor with Producer with Oneway with SerializationSupport {
+abstract class EventMessageConfirmableProducer(applicationLevelAck: Boolean = false) extends Actor with Producer with SerializationSupport {
 
   override def transformOutgoingMessage(msg: Any): Any = msg match {
     case cp:ConfirmablePersistent => unwrapEventMessage(cp)
@@ -25,6 +26,9 @@ abstract class EventMessageConfirmableProducer extends Actor with Producer with 
     msg match {
       case CamelMessage(eventMsg:EventMessage, _) =>
         rewrapToConfirmable(eventMsg).confirm()
+    }
+    if (applicationLevelAck) {
+      sender ! Acknowledged
     }
   }
 

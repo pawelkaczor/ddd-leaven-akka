@@ -1,11 +1,11 @@
-package ecommerce.sales.service
+package ecommerce.sales.productcatalog
 
 import infrastructure.view.Profile
 import ecommerce.sales.sharedkernel.{ProductType, Money}
 import java.util.Currency
 import ecommerce.sales.domain.product.Product
 
-trait ProductDao extends Profile {
+trait ProductCatalog extends Profile {
   import profile.simple._
 
   object ProductRow extends ((String, String, String, Option[BigDecimal], Option[String]) => ProductRow){

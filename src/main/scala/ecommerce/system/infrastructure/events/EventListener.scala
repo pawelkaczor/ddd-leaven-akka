@@ -3,19 +3,18 @@ package ecommerce.system.infrastructure.events
 import akka.actor.{ActorSystem, Props, Actor}
 import akka.camel.{CamelMessage, Consumer}
 import ddd.support.domain.event.DomainEventMessage
-import ddd.support.domain.AggregateRoot.Event
 
 object EventListener {
 
   def apply(endpoint: String)(handler: DomainEventMessage => Unit)(implicit system: ActorSystem) = {
 
-    val endpointActorName = s"${endpoint.split(':').last}Listener"
+    val listenerName = s"${endpoint.split(':').last}Listener"
 
     system.actorOf(Props(new EventListener {
       override def endpointUri = endpoint
-      override def handle(eventMessage: DomainEventMessage) = handler(eventMessage)
-      override def handle(aggregateId: String, event: Event) = throw new UnsupportedOperationException
-    }), name = endpointActorName)
+      override def handle(eventMessage: DomainEventMessage): Unit = handler.apply(eventMessage)
+      
+    }), name = listenerName)
   }
 
 }
@@ -27,10 +26,6 @@ abstract class EventListener extends Actor with Consumer {
       handle(em)
   }
 
-  def handle(eventMessage: DomainEventMessage) {
-    handle(eventMessage.aggregateId, eventMessage.payload)
-  }
-
-  def handle(aggregateId: String, event: Event)
+  def handle(eventMessage: DomainEventMessage)
 
 }

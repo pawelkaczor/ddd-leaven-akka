@@ -1,8 +1,6 @@
 package ecommerce.integration
 
-import scala.concurrent.duration._
 import ddd.support.domain.Office._
-import scala.reflect.ClassTag
 import ddd.support.domain.AggregateRootActorFactory
 import akka.actor.Props
 import test.support.{ClusterConfig, ClusterSpec}
@@ -19,8 +17,10 @@ import ddd.support.domain.protocol.Acknowledged
 import infrastructure.view.ViewDatabase
 import infrastructure.EcommerceSettings
 import ecommerce.inventory.integration.InventoryQueue
-import ecommerce.sales.service.ProductCatalog
+import ecommerce.sales.productcatalog.ProductFinder
 import infrastructure.akka.event.ReliablePublisher
+import ecommerce.system.infrastructure.events.Projection
+import ecommerce.sales.integration.InventoryProjection
 
 class EventsPublishingClusterSpecMultiJvmNode1
   extends EventsPublishingClusterSpec with EmbeddedBrokerTestSupport
@@ -41,7 +41,7 @@ class EventsPublishingClusterSpec extends ClusterSpec with ViewDatabase {
   }
 
   def registerGlobalInventoryOffice() {
-    val inventoryQueue = system.actorOf(InventoryQueue.props, InventoryQueue.name)
+    val inventoryQueue = system.actorOf(InventoryQueue.recipeForInOnly(), InventoryQueue.name)
 
     implicit object ProductActorFactory extends AggregateRootActorFactory[Product] {
       override def props(passivationConfig: PassivationConfig): Props = {
@@ -70,26 +70,21 @@ class EventsPublishingClusterSpec extends ClusterSpec with ViewDatabase {
         enterBarrier("events published")
 
         val daos = new Daos(H2Driver)
-        val productCatalog = system.actorOf(ProductCatalog.props(viewDb, daos), ProductCatalog.name)
+        Projection(InventoryQueue.EndpointUri, new InventoryProjection(viewDb, daos), sendEventAsAck = false)
+        val productFinder = system.actorOf(ProductFinder.props(viewDb, daos), ProductFinder.name)
 
-        Thread.sleep(1000) // ProductCatalog must read events from InventoryQueue
-        productCatalog ! ProductCatalog.GetProduct("product-1")
+        // Acknowledgment of publication of new products in catalog has not been requested, thus
+        // immediate query might fail.
+        Thread.sleep(1000)
+
+        productFinder ! ProductFinder.GetProduct("product-1")
         expectReply[Some[Product]]
 
-        productCatalog ! ProductCatalog.GetProduct("product-2")
+        productFinder ! ProductFinder.GetProduct("product-2")
         expectReply[Some[Product]]
 
       }
     }
   }
-
-  def expectReply[T](obj: T)  {
-    expectMsg(20.seconds, obj)
-  }
-
-  def expectReply[T](implicit tag: ClassTag[T])  {
-    expectMsgClass(20.seconds, tag.runtimeClass)
-  }
-
 
 }
