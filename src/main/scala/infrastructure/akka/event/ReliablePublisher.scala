@@ -7,6 +7,7 @@ import scala.concurrent.duration._
 import ddd.support.domain.event.{DomainEventMessage, DomainEvent, EventPublisher}
 import ddd.support.domain.event.EventMessage._
 import infrastructure.akka.SerializationSupport
+import ddd.support.domain.protocol.Published
 
 trait ReliablePublisher extends EventsourcedProcessor with EventPublisher with SerializationSupport {
   this: AggregateRoot[_] =>
@@ -29,7 +30,12 @@ trait ReliablePublisher extends EventsourcedProcessor with EventPublisher with S
   def toEventMessage(event: DomainEvent) = {
     val message = DomainEventMessage(SnapshotId(aggregateId, lastSequenceNr), event)
     if (applicationLevelAck)
-      message.withMetaAttribute(ReplyTo, serialize(sender()))
+      message.withMetaData(
+        Map(
+          ReplyTo -> serialize(sender()),
+          ReplyWith -> Published
+        )
+      )
     else
       message
   }

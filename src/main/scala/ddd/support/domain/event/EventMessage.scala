@@ -1,24 +1,24 @@
 package ddd.support.domain.event
 
-import ddd.support.domain.AggregateRoot._
 import java.util.Date
 
 object EventMessage {
-  val ReplyTo = "ReplyTo"
+  case object ReplyTo
+  case object ReplyWith
 }
 
 abstract class EventMessage(
-    val payload: Event,
+    val payload: DomainEvent,
     val identifier: String,
     val timestamp: Date,
-    val metaData: Map[String, Any])
+    val metaData: Map[Any, Any])
   extends Serializable {
 
-  def withMetaData(newMetaData: Map[String, Any], clearExisting: Boolean = false): EventMessage
+  def withMetaData(newMetaData: Map[Any, Any], clearExisting: Boolean = false): EventMessage
 
-  def withMetaAttribute(attrName: String, value: Any) = withMetaData(Map(attrName -> value))
+  def withMetaAttribute(attrName: Any, value: Any) = withMetaData(Map(attrName -> value))
 
-  def hasMetaAttribute(attrName: String) = metaData.get(attrName).isDefined
+  def hasMetaAttribute(attrName: Any) = metaData.get(attrName).isDefined
 
-  def getMetaAttribute[A](attrName: String) = metaData.get(attrName).get.asInstanceOf[A]
+  def getMetaAttribute[A](attrName: Any) = metaData.get(attrName).get.asInstanceOf[A]
 }

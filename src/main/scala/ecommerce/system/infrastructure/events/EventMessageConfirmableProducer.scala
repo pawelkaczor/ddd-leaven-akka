@@ -7,7 +7,7 @@ import akka.persistence.{Persistent, ConfirmablePersistent}
 import ddd.support.domain.event.EventMessage
 import EventMessageConfirmableProducer._
 import ddd.support.domain.protocol.Published
-import ddd.support.domain.event.EventMessage.ReplyTo
+import ddd.support.domain.event.EventMessage.{ReplyWith, ReplyTo}
 
 object EventMessageConfirmableProducer {
   val ConfirmableInfo = "ConfirmableInfo"
@@ -28,7 +28,7 @@ abstract class EventMessageConfirmableProducer extends Actor with Producer with 
       case CamelMessage(eventMsg:EventMessage, _) =>
         rewrapToConfirmable(eventMsg).confirm()
         if (eventMsg.hasMetaAttribute(ReplyTo)) {
-          getReplyTo(eventMsg) ! Published
+          getReplyTo(eventMsg) ! eventMsg.getMetaAttribute(ReplyWith)
         }
     }
   }
