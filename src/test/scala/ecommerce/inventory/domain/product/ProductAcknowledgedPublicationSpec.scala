@@ -9,7 +9,7 @@ import ecommerce.system.infrastructure.events.{ProjectionSpec, EventListener, Pr
 import ecommerce.inventory.integration.InventoryQueue
 import ecommerce.inventory.domain.Product
 import ddd.support.domain.protocol.{Published, Acknowledged}
-import ddd.support.domain.AggregateRootActorFactory
+import ddd.support.domain.{SnapshotId, AggregateRootActorFactory}
 import infrastructure.actor.PassivationConfig
 import akka.actor.Props
 import ddd.support.domain.Office._
@@ -34,7 +34,7 @@ class ProductAcknowledgedPublicationSpec extends EventsourcedAggregateRootSpec[P
       }
 
       Projection(InventoryQueue.EndpointUri, new ProjectionSpec() {
-        override def apply(aggregateId: String, event: DomainEvent): Unit = {
+        override def apply(id: SnapshotId, event: DomainEvent): Unit = {
           // do nothing
         }
       })

@@ -4,21 +4,23 @@ import infrastructure.view.Profile
 import ecommerce.sales.sharedkernel.{ProductType, Money}
 import java.util.Currency
 import ecommerce.sales.domain.product.Product
+import ddd.support.domain.SnapshotId
 
 trait ProductCatalog extends Profile {
   import profile.simple._
 
-  object ProductRow extends ((String, String, String, Option[BigDecimal], Option[String]) => ProductRow){
+  object ProductRow extends ((String, String, String, Option[BigDecimal], Option[String], Long) => ProductRow){
     def apply(p: Product) = {
       val priceOpt = p.price.flatMap(m => Some(m.value))
       val currencyOpt = p.price.flatMap(m => Some(m.currencyCode))
-      new ProductRow(p.productId, p.name, p.productType.toString, priceOpt, currencyOpt)
+      new ProductRow(p.productId, p.name, p.productType.toString, priceOpt, currencyOpt, p.version)
     }
   }
 
-  case class ProductRow(id: String, name: String, pType: String, price: Option[BigDecimal], currency: Option[String]) {
+  case class ProductRow(id: String, name: String, pType: String, price: Option[BigDecimal],
+                        currency: Option[String], version: Long) {
     def productData =
-      Product(id, name, ProductType.withName(pType), priceAsMoney)
+      Product(SnapshotId(id, version), name, ProductType.withName(pType), priceAsMoney)
 
     def priceAsMoney: Option[Money] = {
       if (price.isDefined) {
@@ -35,7 +37,8 @@ trait ProductCatalog extends Profile {
     def pType = column[String]("TYPE", O.NotNull)
     def price = column[Option[BigDecimal]]("PRICE")
     def currency = column[Option[String]]("CURRENCY")
-    def * = (id, name, pType, price, currency) <> (ProductRow.tupled, ProductRow.unapply)
+    def version = column[Long]("VERSION", O.NotNull)
+    def * = (id, name, pType, price, currency, version) <> (ProductRow.tupled, ProductRow.unapply)
   }
   val products = TableQuery[Products]
 

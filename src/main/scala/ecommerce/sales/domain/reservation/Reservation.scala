@@ -72,7 +72,7 @@ abstract class Reservation(override val passivationConfig: PassivationConfig) ex
         } else {
           // TODO fetch product detail
           // TODO fetch price for the client
-          val product = Product(productId, "productName", ProductType.Standard, Some(Money(10)))
+          val product = Product(SnapshotId(productId, 0), "productName", ProductType.Standard, Some(Money(10)))
           raise(ProductReserved(reservationId, product, quantity))
         }
 

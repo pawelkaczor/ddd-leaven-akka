@@ -3,16 +3,21 @@ package test.support.view
 import org.scalatest.{Suite, BeforeAndAfterAll}
 import org.h2.tools.Server._
 import scala.slick.driver.H2Driver
-import scala.slick.jdbc.JdbcBackend._
 import infrastructure.view.ViewDatabase
+import akka.event.LoggingAdapter
 
 trait ViewsTestSupport extends ViewDatabase with BeforeAndAfterAll {
   this: Suite =>
+  val logger: LoggingAdapter
+
   val h2Server = createTcpServer("-tcpPort", "8092", "-tcpAllowOthers")
   val dal = new Daos(H2Driver)
 
   override def beforeAll() {
     super.beforeAll()
+
+    logger.debug("Starting views")
+
     h2Server.start()
     import dal.profile.simple._
 
@@ -24,8 +29,10 @@ trait ViewsTestSupport extends ViewDatabase with BeforeAndAfterAll {
   }
 
   override def afterAll() {
-    super.afterAll()
+    logger.debug("Stopping views")
+    h2Server.stop()
     h2Server.shutdown()
+    super.afterAll()
   }
 
 }

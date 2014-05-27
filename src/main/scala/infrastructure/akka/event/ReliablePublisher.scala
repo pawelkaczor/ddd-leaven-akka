@@ -2,7 +2,7 @@ package infrastructure.akka.event
 
 import akka.actor.ActorPath
 import akka.persistence._
-import ddd.support.domain.AggregateRoot
+import ddd.support.domain.{SnapshotId, AggregateRoot}
 import scala.concurrent.duration._
 import ddd.support.domain.event.{DomainEventMessage, DomainEvent, EventPublisher}
 
@@ -20,7 +20,7 @@ trait ReliablePublisher extends EventsourcedProcessor with EventPublisher {
 
 
   override def publish(event: DomainEvent) {
-    channel ! Deliver(Persistent(DomainEventMessage(aggregateId, event)), target)
+    channel ! Deliver(Persistent(DomainEventMessage(SnapshotId(aggregateId, lastSequenceNr), event)), target)
   }
 
   abstract override def receiveRecover: Receive = {

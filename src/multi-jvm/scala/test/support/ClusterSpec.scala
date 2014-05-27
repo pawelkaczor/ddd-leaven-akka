@@ -18,6 +18,8 @@ abstract class ClusterSpec extends MultiNodeSpec(ClusterConfig)
 
   import ClusterConfig._
 
+  implicit val logger = system.log
+
   def initialParticipants = roles.size
 
   val storageLocations = List(

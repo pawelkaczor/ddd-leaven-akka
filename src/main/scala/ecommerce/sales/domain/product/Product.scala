@@ -2,12 +2,21 @@ package ecommerce.sales.domain.product
 
 import ecommerce.sales.sharedkernel.ProductType
 import ProductType._
-import java.util.Date
 import ecommerce.sales.sharedkernel.Money
+import ddd.support.domain.SnapshotId
+
+object Product {
+  def apply(productId: String, name: String, productType: ProductType, price: Option[Money]) =
+    new Product(SnapshotId(productId), name, productType, price)
+}
 
 case class Product(
-  productId: String,
+  snapshotId: SnapshotId,
   name: String,
   productType: ProductType,
-  price: Option[Money],
-  snapshotDate: Date = new Date)
+  price: Option[Money]) {
+
+  def productId = snapshotId.aggregateId
+  def version = snapshotId.sequenceNr
+  def timestamp = snapshotId.timestamp
+}

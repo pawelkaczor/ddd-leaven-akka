@@ -1,14 +1,19 @@
 package ecommerce.system.infrastructure.events
 
 import ddd.support.domain.event.{DomainEvent, DomainEventMessage}
-import akka.actor.ActorSystem
-import akka.event.Logging
+import akka.event.LoggingAdapter
+import ddd.support.domain.SnapshotId
 
-abstract class ProjectionSpec(implicit system: ActorSystem) extends Function[DomainEventMessage, Unit] {
+abstract class ProjectionSpec(implicit val log: LoggingAdapter) extends Function[DomainEventMessage, Unit] {
 
-  protected val log = Logging.getLogger(system, this)
+  def currentVersion(aggregateId: String): Option[Long] = None
 
-  override def apply(event: DomainEventMessage): Unit = apply(event.aggregateId, event.payload)
+  def isApplied(event: DomainEventMessage) =
+    currentVersion(event.aggregateId).flatMap(v => Some(v >= event.sequenceNr)).getOrElse(false)
 
-  def apply(aggregateId: String, event: DomainEvent)
+  override def apply(event: DomainEventMessage): Unit =
+    if (!isApplied(event))
+      apply(event.snapshotId, event.payload)
+
+  def apply(snapshotId: SnapshotId, event: DomainEvent)
 }

@@ -6,18 +6,28 @@ import ecommerce.inventory.domain.Product.ProductAdded
 import ecommerce.sales.domain.product.Product
 import ecommerce.sales.productcatalog.ProductCatalog
 import ecommerce.system.infrastructure.events.ProjectionSpec
-import akka.actor.ActorSystem
+import akka.event.LoggingAdapter
+import ddd.support.domain.SnapshotId
 
-class InventoryProjection(db: Database, productCatalog: ProductCatalog)(implicit system: ActorSystem) extends ProjectionSpec {
+class InventoryProjection(db: Database, productCatalog: ProductCatalog)
+    (implicit override val log: LoggingAdapter)
+  extends ProjectionSpec {
 
-  override def apply(productId: String, event: Event) {
+  import productCatalog.profile.simple._
+
+  override def apply(snapshotId: SnapshotId, event: Event) {
     event match {
       case ProductAdded(name, productType) =>
-        db withSession { implicit session: productCatalog.profile.simple.Session =>
-          productCatalog.insert(Product(productId, name, productType, price = None))
-          log.info(s"Product $productId added to catalog")
+        db withSession { implicit session: Session =>
+          productCatalog.insert(Product(snapshotId, name, productType, price = None))
+          log.info(s"Product $snapshotId added to catalog")
         }
       }
   }
 
+  override def currentVersion(id: String): Option[Long] = {
+    db withSession { implicit session: Session =>
+      productCatalog.productById(id).map(p => p.snapshotId.sequenceNr)
+    }
+  }
 }

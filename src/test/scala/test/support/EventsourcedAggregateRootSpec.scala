@@ -18,6 +18,8 @@ abstract class EventsourcedAggregateRootSpec[T](_system: ActorSystem)(implicit a
   val settings = EcommerceSettings(system)
   val domain = arClassTag.runtimeClass.getSimpleName
 
+  implicit val logger = system.log
+
   override def afterAll() {
     TestKit.shutdownActorSystem(system)
     system.awaitTermination()
