@@ -9,13 +9,11 @@ object InventoryQueue {
 
   val name = "inventoryQueue"
 
-  def recipeForInOnly(applicationLevelAck: Boolean = false) =
-    Props(new InventoryQueue(applicationLevelAck) with Oneway)
+  def recipeForInOnly = Props(new InventoryQueue with Oneway)
 
-  def recipeForInOut(applicationLevelAck: Boolean = false) =
-    Props(new InventoryQueue(applicationLevelAck))
+  def recipeForInOut = Props(new InventoryQueue)
 }
 
-class InventoryQueue(applicationLevelAck: Boolean) extends EventMessageConfirmableProducer(applicationLevelAck) {
+class InventoryQueue extends EventMessageConfirmableProducer {
   override def endpointUri = InventoryQueue.EndpointUri
 }

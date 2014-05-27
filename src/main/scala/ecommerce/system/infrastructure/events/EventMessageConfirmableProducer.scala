@@ -1,12 +1,13 @@
 package ecommerce.system.infrastructure.events
 
-import akka.actor.Actor
+import akka.actor.{ActorRef, Actor}
 import akka.camel.{CamelMessage, Producer}
 import infrastructure.akka.SerializationSupport
 import akka.persistence.{Persistent, ConfirmablePersistent}
 import ddd.support.domain.event.EventMessage
 import EventMessageConfirmableProducer._
-import ddd.support.domain.protocol.Acknowledged
+import ddd.support.domain.protocol.Published
+import ddd.support.domain.event.EventMessage.ReplyTo
 
 object EventMessageConfirmableProducer {
   val ConfirmableInfo = "ConfirmableInfo"
@@ -16,7 +17,7 @@ object EventMessageConfirmableProducer {
  * Forwards payloads (of type EventMessage) of incoming ConfirmablePersistent messages to defined endpoint.
  * Confirms to sender once event message is delivered to endpoint.
  */
-abstract class EventMessageConfirmableProducer(applicationLevelAck: Boolean = false) extends Actor with Producer with SerializationSupport {
+abstract class EventMessageConfirmableProducer extends Actor with Producer with SerializationSupport {
 
   override def transformOutgoingMessage(msg: Any): Any = msg match {
     case cp:ConfirmablePersistent => unwrapEventMessage(cp)
@@ -26,10 +27,14 @@ abstract class EventMessageConfirmableProducer(applicationLevelAck: Boolean = fa
     msg match {
       case CamelMessage(eventMsg:EventMessage, _) =>
         rewrapToConfirmable(eventMsg).confirm()
+        if (eventMsg.hasMetaAttribute(ReplyTo)) {
+          getReplyTo(eventMsg) ! Published
+        }
     }
-    if (applicationLevelAck) {
-      sender ! Acknowledged
-    }
+  }
+
+  def getReplyTo(eventMsg: EventMessage): ActorRef = {
+    deserialize[ActorRef](eventMsg.getMetaAttribute(ReplyTo))
   }
 
   def unwrapEventMessage(cp: ConfirmablePersistent) = cp match {

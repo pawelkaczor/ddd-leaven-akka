@@ -41,7 +41,7 @@ class EventsPublishingClusterSpec extends ClusterSpec with ViewDatabase {
   }
 
   def registerGlobalInventoryOffice() {
-    val inventoryQueue = system.actorOf(InventoryQueue.recipeForInOnly(), InventoryQueue.name)
+    val inventoryQueue = system.actorOf(InventoryQueue.recipeForInOnly, InventoryQueue.name)
 
     implicit object ProductActorFactory extends AggregateRootActorFactory[Product] {
       override def props(passivationConfig: PassivationConfig): Props = {

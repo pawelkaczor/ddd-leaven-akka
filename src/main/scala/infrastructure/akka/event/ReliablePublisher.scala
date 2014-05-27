@@ -5,11 +5,14 @@ import akka.persistence._
 import ddd.support.domain.{SnapshotId, AggregateRoot}
 import scala.concurrent.duration._
 import ddd.support.domain.event.{DomainEventMessage, DomainEvent, EventPublisher}
+import ddd.support.domain.event.EventMessage._
+import infrastructure.akka.SerializationSupport
 
-trait ReliablePublisher extends EventsourcedProcessor with EventPublisher {
+trait ReliablePublisher extends EventsourcedProcessor with EventPublisher with SerializationSupport {
   this: AggregateRoot[_] =>
 
   def target: ActorPath
+  def applicationLevelAck = false
 
   val redeliverInterval = 30.seconds
   val redeliverMax = 15
@@ -20,7 +23,15 @@ trait ReliablePublisher extends EventsourcedProcessor with EventPublisher {
 
 
   override def publish(event: DomainEvent) {
-    channel ! Deliver(Persistent(DomainEventMessage(SnapshotId(aggregateId, lastSequenceNr), event)), target)
+    channel ! Deliver(Persistent(toEventMessage(event)), target)
+  }
+
+  def toEventMessage(event: DomainEvent) = {
+    val message = DomainEventMessage(SnapshotId(aggregateId, lastSequenceNr), event)
+    if (applicationLevelAck)
+      message.withMetaAttribute(ReplyTo, serialize(sender()))
+    else
+      message
   }
 
   abstract override def receiveRecover: Receive = {

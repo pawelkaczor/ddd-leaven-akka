@@ -11,7 +11,7 @@ import ddd.support.domain.AggregateRootActorFactory
 import ecommerce.inventory.domain.Product.{AddProduct, ProductAdded}
 import ecommerce.sales.sharedkernel.ProductType
 import test.support.broker.EmbeddedBrokerTestSupport
-import ecommerce.system.infrastructure.events.{EventListener, Projection}
+import ecommerce.system.infrastructure.events.EventListener
 import ecommerce.inventory.integration.InventoryQueue
 import ecommerce.inventory.domain.Product
 import infrastructure.akka.event.ReliablePublisher
@@ -21,7 +21,7 @@ class ProductReliablePublishingSpec extends EventsourcedAggregateRootSpec[Produc
   "New product" should {
     "be published using inventory queue" in {
       // given
-      val inventoryQueuePath = system.actorOf(InventoryQueue.recipeForInOnly(), InventoryQueue.name).path
+      val inventoryQueuePath = system.actorOf(InventoryQueue.recipeForInOnly, InventoryQueue.name).path
 
       implicit object ProductActorFactory extends AggregateRootActorFactory[Product] {
         override def props(passivationConfig: PassivationConfig): Props = {

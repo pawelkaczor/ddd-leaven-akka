@@ -17,11 +17,11 @@ import ddd.support.domain.protocol.{Published, Acknowledged}
 import infrastructure.view.ViewDatabase
 import infrastructure.EcommerceSettings
 import ecommerce.inventory.integration.InventoryQueue
-import infrastructure.akka.event.AcknowledgingPublisher
 import ecommerce.sales.productcatalog.ProductFinder.GetProduct
 import ecommerce.sales.sharedkernel.ProductType.Standard
 import ecommerce.system.infrastructure.events.Projection
 import ecommerce.sales.integration.InventoryProjection
+import infrastructure.akka.event.ReliablePublisher
 
 class ProductAcknowledgedPublicationClusterSpecMultiJvmNode1
   extends ProductAcknowledgedPublicationClusterSpec with EmbeddedBrokerTestSupport
@@ -42,12 +42,13 @@ class ProductAcknowledgedPublicationClusterSpec extends ClusterSpec with ViewDat
   }
 
   def registerGlobalInventoryOffice() {
-    val inventoryQueue = system.actorOf(InventoryQueue.recipeForInOut(applicationLevelAck = true), InventoryQueue.name)
+    val inventoryQueue = system.actorOf(InventoryQueue.recipeForInOut, InventoryQueue.name)
 
     implicit object ProductActorFactory extends AggregateRootActorFactory[Product] {
       override def props(config: PassivationConfig): Props = {
-        Props(new Product(config) with AcknowledgingPublisher {
+        Props(new Product(config) with ReliablePublisher {
           override val target = inventoryQueue.path
+          override val applicationLevelAck = true
         })
       }
     }
