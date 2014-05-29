@@ -8,7 +8,7 @@ object AggregateIdResolution {
   type AggregateIdResolver = PartialFunction[Any, AggregateId]
 }
 
-trait AggregateIdResolution[T] {
+class AggregateIdResolution[T] {
   def aggregateIdResolver: AggregateIdResolver = {
     case c: Command => c.aggregateId
     case cm: CommandMessage => cm.command.aggregateId

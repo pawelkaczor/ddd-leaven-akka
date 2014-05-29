@@ -28,9 +28,7 @@ object Reservation {
 
   def processorId(aggregateId: String) = "Reservations/" + aggregateId
 
-  implicit val idResolution  = new ReservationIdResolution
-
-  class ReservationIdResolution extends AggregateIdResolution[Reservation]
+  implicit val idResolution  = new AggregateIdResolution[Reservation]
 
   // Commands
   sealed trait Command extends command.Command {

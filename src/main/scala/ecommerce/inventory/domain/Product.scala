@@ -11,9 +11,7 @@ object Product {
 
   def processorId(aggregateId: String) = "Products/" + aggregateId
 
-  implicit val idResolution  = new ProductIdResolution
-
-  class ProductIdResolution extends AggregateIdResolution[Product]
+  implicit val idResolution  = new AggregateIdResolution[Product]
 
   // Commands
   sealed trait Command extends command.Command {
