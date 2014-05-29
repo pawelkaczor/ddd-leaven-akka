@@ -1,3 +1,3 @@
 package ddd.support.domain.protocol
 
-case object Published
+case object Published extends Delivered

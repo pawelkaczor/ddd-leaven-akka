@@ -9,6 +9,7 @@ import ddd.support.domain.event.{EventHandler, DomainEvent}
 import akka.actor.Status.Failure
 import infrastructure.actor.PassivationConfig
 import ddd.support.domain.protocol.Acknowledged
+import ddd.support.domain.command.CommandMessage
 
 object AggregateRoot {
   type Event = DomainEvent
@@ -28,13 +29,15 @@ trait AggregateRoot[S <: AggregateState]
 
   type AggregateRootFactory = PartialFunction[Event, S]
   private var stateOpt: Option[S] = None
+  private var _lastCommandMessage: Option[CommandMessage] = None
   val factory: AggregateRootFactory
 
   override def processorId: String = aggregateId
 
   override def receiveCommand: Receive = {
-    case msg =>
-      handleCommand.applyOrElse(msg, unhandled)
+    case cm: CommandMessage =>
+      _lastCommandMessage = Some(cm)
+      handleCommand.applyOrElse(cm.command, unhandled)
   }
 
   override def receiveRecover: Receive = {
@@ -46,6 +49,8 @@ trait AggregateRoot[S <: AggregateState]
     sender() ! Failure(reason)
     super.preRestart(reason, message)
   }
+
+  def commandMessage = _lastCommandMessage.get
 
   def aggregateId = self.path.name
 

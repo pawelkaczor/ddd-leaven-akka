@@ -4,7 +4,6 @@ import scala.concurrent.duration._
 import ddd.support.domain.protocol.Acknowledged
 import ddd.support.domain.Office._
 import infrastructure.cluster.ShardResolution.ShardResolutionStrategy
-import akka.contrib.pattern.ShardRegion._
 import ecommerce.sales.domain.reservation.Reservation._
 import akka.testkit.TestProbe
 import scala.reflect.ClassTag
@@ -13,6 +12,7 @@ import ddd.support.domain.AggregateRootActorFactory
 import infrastructure.actor.PassivationConfig
 import akka.actor.Props
 import test.support.{ClusterConfig, ClusterSpec, LocalPublisher}
+import ddd.support.domain.command.CommandMessage
 
 
 class ReservationGlobalOfficeSpecMultiJvmNode1 extends ReservationGlobalOfficeSpec
@@ -32,8 +32,8 @@ class ReservationGlobalOfficeSpec extends ClusterSpec {
     startSharding[Reservation](new ReservationShardResolution {
       //take last char of reservationId as shard id
       override def shardResolutionStrategy: ShardResolutionStrategy =
-        addressResolver => {
-          case msg: Msg => addressResolver(msg).last.toString
+        aggregateIdResolver => {
+          case msg => aggregateIdResolver(msg).last.toString
         }
     })
   }

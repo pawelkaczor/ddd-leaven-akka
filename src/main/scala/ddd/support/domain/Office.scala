@@ -5,6 +5,9 @@ import infrastructure.actor.{PassivationConfig, Passivate, ActorContextCreationS
 import scala.reflect.ClassTag
 import akka.contrib.pattern.ClusterSharding
 import scala.concurrent.duration._
+import infrastructure.actor.Passivate
+import infrastructure.actor.PassivationConfig
+import ddd.support.domain.command.{Command, CommandMessage}
 
 object Office {
 
@@ -39,18 +42,28 @@ class Office[T <: AggregateRoot[_]](inactivityTimeout: Duration = 1.minutes)(
     clerkFactory: AggregateRootActorFactory[T])
   extends ActorContextCreationSupport with Actor with ActorLogging {
 
+
+  override def aroundReceive(receive: Actor.Receive, msg: Any): Unit = {
+    receive.applyOrElse(msg match {
+      case c: Command => CommandMessage(c)
+      case other => other
+    }, unhandled)
+  }
+
+
+
   def receive: Receive = {
     // TODO (passivation) in-between receiving Passivate and Terminated the office should buffer all incoming messages
     // for the clerk being passivated, when receiving Terminated it should flush the buffer
     case Passivate(stopMessage) =>
       dismiss(sender(), stopMessage)
-    case msg =>
+    case cm: CommandMessage =>
       val clerkProps = clerkFactory.props(PassivationConfig(Passivate(PoisonPill), inactivityTimeout))
-      val clerk = assignClerk(clerkProps, resolveCaseId(msg))
-      clerk forward msg
+      val clerk = assignClerk(clerkProps, resolveCaseId(cm.command))
+      clerk forward cm
   }
 
-  def resolveCaseId(msg: Any) = caseIdResolution.aggregateIdResolver(msg)
+  def resolveCaseId(msg: Command) = caseIdResolution.aggregateIdResolver(msg)
 
   def assignClerk(caseProps: Props, caseId: String): ActorRef = getOrCreateChild(caseProps, caseId)
   

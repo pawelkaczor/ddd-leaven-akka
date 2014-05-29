@@ -3,6 +3,7 @@ package ecommerce.system.infrastructure.events
 import akka.actor.{ActorSystem, Props}
 import akka.camel.Ack
 import ddd.support.domain.event.DomainEventMessage
+import ddd.support.domain.protocol.ViewUpdated
 
 object Projection {
 
@@ -24,7 +25,16 @@ abstract class Projection(spec: ProjectionSpec, sendEventAsAck: Boolean = true) 
 
   override def handle(eventMessage: DomainEventMessage) {
     spec.apply(eventMessage)
-    sender ! (if (sendEventAsAck) eventMessage else Ack)
+    sender ! toResponse(eventMessage)
   }
+
+  def toResponse(eventMessage: DomainEventMessage): Any =
+    if (sendEventAsAck) {
+      implicit def system = context.system
+      import ecommerce.system.DeliveryContext.Adjust._
+      eventMessage.withReceipt(ViewUpdated)
+    } else {
+      Ack
+    }
 
 }

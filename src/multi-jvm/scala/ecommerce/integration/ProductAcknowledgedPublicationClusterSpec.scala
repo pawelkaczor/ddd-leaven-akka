@@ -13,7 +13,7 @@ import scala.slick.driver.H2Driver
 import ecommerce.inventory.domain.Product.AddProduct
 import ecommerce.inventory.domain.Product
 import infrastructure.actor.PassivationConfig
-import ddd.support.domain.protocol.{Published, Acknowledged}
+import ddd.support.domain.protocol.{ViewUpdated, Acknowledged}
 import infrastructure.view.ViewDatabase
 import infrastructure.EcommerceSettings
 import ecommerce.inventory.integration.InventoryQueue
@@ -22,6 +22,7 @@ import ecommerce.sales.sharedkernel.ProductType.Standard
 import ecommerce.system.infrastructure.events.Projection
 import ecommerce.sales.integration.InventoryProjection
 import infrastructure.akka.event.ReliablePublisher
+import ecommerce.system.DeliveryContext
 
 class ProductAcknowledgedPublicationClusterSpecMultiJvmNode1
   extends ProductAcknowledgedPublicationClusterSpec with EmbeddedBrokerTestSupport
@@ -48,7 +49,6 @@ class ProductAcknowledgedPublicationClusterSpec extends ClusterSpec with ViewDat
       override def props(config: PassivationConfig): Props = {
         Props(new Product(config) with ReliablePublisher {
           override val target = inventoryQueue.path
-          override val applicationLevelAck = true
         })
       }
     }
@@ -62,11 +62,12 @@ class ProductAcknowledgedPublicationClusterSpec extends ClusterSpec with ViewDat
         val inventoryOffice = globalOffice[Product]
 
         // when
-        inventoryOffice ! AddProduct("product-1", "product 1", Standard)
+        import DeliveryContext.Adjust._
+        inventoryOffice ! AddProduct("product-1", "product 1", Standard).requestDLR()
 
         // then
         expectReply(Acknowledged)
-        expectReply(Published)
+        expectReply(ViewUpdated)
 
         enterBarrier("publication acknowledged")
       }

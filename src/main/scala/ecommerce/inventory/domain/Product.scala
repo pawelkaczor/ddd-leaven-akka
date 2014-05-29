@@ -13,14 +13,13 @@ object Product {
 
   implicit val idResolution  = new ProductIdResolution
 
-  class ProductIdResolution extends AggregateIdResolution[Product] {
-    override def aggregateIdResolver = {
-      case cmd: Command => cmd.sku
-    }
-  }
+  class ProductIdResolution extends AggregateIdResolution[Product]
 
   // Commands
-  sealed trait Command { def sku: String }
+  sealed trait Command extends command.Command {
+    def sku: String
+    override def aggregateId = sku
+  }
   case class AddProduct(sku: String, name: String, productType: ProductType) extends Command
 
   // Events

@@ -8,13 +8,14 @@ import test.support.broker.EmbeddedBrokerTestSupport
 import ecommerce.system.infrastructure.events.{ProjectionSpec, Projection}
 import ecommerce.inventory.integration.InventoryQueue
 import ecommerce.inventory.domain.Product
-import ddd.support.domain.protocol.{Published, Acknowledged}
+import ddd.support.domain.protocol.{ViewUpdated, Acknowledged}
 import ddd.support.domain.{SnapshotId, AggregateRootActorFactory}
 import infrastructure.actor.PassivationConfig
 import akka.actor.Props
 import ddd.support.domain.Office._
 import ddd.support.domain.event.DomainEvent
 import infrastructure.akka.event.ReliablePublisher
+import ecommerce.system.DeliveryContext
 
 class ProductAcknowledgedPublicationSpec extends EventsourcedAggregateRootSpec[Product](testSystem) with EmbeddedBrokerTestSupport {
 
@@ -29,7 +30,6 @@ class ProductAcknowledgedPublicationSpec extends EventsourcedAggregateRootSpec[P
         override def props(passivationConfig: PassivationConfig): Props = {
           Props(new Product(passivationConfig) with ReliablePublisher {
             override val target = inventoryQueuePath
-            override val applicationLevelAck = true
           })
         }
       }
@@ -41,11 +41,14 @@ class ProductAcknowledgedPublicationSpec extends EventsourcedAggregateRootSpec[P
       })
 
       // when
-      office[Product] ! AddProduct("product-1", "product 1", ProductType.Standard)
+      {
+        import DeliveryContext.Adjust._
+        office[Product] ! AddProduct("product-1", "product 1", ProductType.Standard).requestDLR()
+      }
 
       // then
       expectReply(Acknowledged)
-      expectReply(Published)
+      expectReply(ViewUpdated)
 
     }
   }

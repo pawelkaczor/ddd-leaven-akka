@@ -5,9 +5,11 @@ import java.util.Date
 import ecommerce.sales.sharedkernel.{ProductType, Money}
 import ddd.support.domain._
 import ddd.support.domain.event.{EventPublisher, DomainEvent}
+import ecommerce.sales.domain.product.Product
 import ecommerce.sales.domain.reservation.Reservation.ProductReserved
 import ecommerce.sales.domain.reservation.errors.ReservationCreationException
 import ecommerce.sales.domain.reservation.Reservation.CreateReservation
+import ddd.support.domain.SnapshotId
 import scala.Some
 import ecommerce.sales.domain.reservation.errors.ReservationOperationException
 import ecommerce.sales.domain.reservation.Reservation.CloseReservation
@@ -15,7 +17,6 @@ import ecommerce.sales.domain.reservation.Reservation.ReserveProduct
 import ecommerce.sales.domain.reservation.Reservation.ReservationCreated
 import ecommerce.sales.domain.reservation.Reservation.ReservationClosed
 import infrastructure.actor.PassivationConfig
-import ecommerce.sales.domain.product.Product
 
 /**
  * Reservation is just a "wish list". System can not guarantee that user can buy desired products.</br>
@@ -29,14 +30,14 @@ object Reservation {
 
   implicit val idResolution  = new ReservationIdResolution
 
-  class ReservationIdResolution extends AggregateIdResolution[Reservation] {
-    override def aggregateIdResolver = {
-      case cmd: Command => cmd.reservationId
-    }
-  }
+  class ReservationIdResolution extends AggregateIdResolution[Reservation]
 
   // Commands
-  sealed trait Command { def reservationId: String }
+  sealed trait Command extends command.Command {
+    def reservationId: String
+    override def aggregateId = reservationId
+  }
+
   case class CreateReservation(reservationId: String, clientId: String) extends Command
   case class ReserveProduct(reservationId: String, productId: String, quantity: Int) extends Command
   case class CloseReservation(reservationId: String) extends Command
