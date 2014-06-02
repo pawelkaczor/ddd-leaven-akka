@@ -1,6 +1,6 @@
 package ecommerce.system.infrastructure.events
 
-import akka.actor.Actor
+import akka.actor.{ActorLogging, Status, Actor}
 import akka.camel.{CamelMessage, Producer}
 import infrastructure.akka.SerializationSupportForActor
 import akka.persistence.{Persistent, ConfirmablePersistent}
@@ -16,7 +16,7 @@ object EventMessageConfirmableProducer {
  * Forwards payloads (of type EventMessage) of incoming ConfirmablePersistent messages to defined endpoint.
  * Confirms to sender once event message is delivered to endpoint.
  */
-abstract class EventMessageConfirmableProducer extends Actor with Producer with SerializationSupportForActor {
+abstract class EventMessageConfirmableProducer extends Actor with Producer with SerializationSupportForActor with ActorLogging {
 
   override def transformOutgoingMessage(msg: Any): Any = msg match {
     case cp:ConfirmablePersistent => unwrapEventMessage(cp)
@@ -29,6 +29,8 @@ abstract class EventMessageConfirmableProducer extends Actor with Producer with 
         if (eventMsg.receiptRequested) {
           eventMsg.receiptRequester ! eventMsg.receipt
         }
+      case Status.Failure(ex) =>
+        log.error("Event delivery to {} failed. Reason: {}", endpointUri, ex.toString)
     }
   }
 

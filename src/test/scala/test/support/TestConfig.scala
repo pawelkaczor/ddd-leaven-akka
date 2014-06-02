@@ -1,6 +1,6 @@
 package test.support
 
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{Config, ConfigFactory}
 import akka.actor.ActorSystem
 
 object TestConfig {
@@ -13,7 +13,9 @@ object TestConfig {
       |akka.persistence.journal.plugin = "in-memory-journal"
     """.stripMargin)
 
-  def testSystem = {
+  def testSystem: ActorSystem = testSystem(TestConfig.config)
+
+  def testSystem(config: Config) = {
     ActorSystem("Tests", config)
   }
 

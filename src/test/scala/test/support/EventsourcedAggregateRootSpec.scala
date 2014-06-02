@@ -11,14 +11,18 @@ import ddd.support.domain.AggregateIdResolution
 import scala.util.Failure
 import akka.actor.Terminated
 import infrastructure.EcommerceSettings
+import org.scalatest.mock.MockitoSugar
 
-abstract class EventsourcedAggregateRootSpec[T](_system: ActorSystem)(implicit arClassTag: ClassTag[T]) extends TestKit(_system)
-  with ImplicitSender with WordSpecLike with Matchers with BeforeAndAfterAll with BeforeAndAfter {
+abstract class EventsourcedAggregateRootSpec[T](_system: ActorSystem)(implicit arClassTag: ClassTag[T])
+  extends TestKit(_system)
+  with ImplicitSender
+  with WordSpecLike with MockitoSugar with Matchers
+  with BeforeAndAfterAll with BeforeAndAfter {
 
   val settings = EcommerceSettings(system)
   val domain = arClassTag.runtimeClass.getSimpleName
 
-  implicit val logger = system.log
+  implicit val logger = new RainbowLogger(suiteName)
 
   override def afterAll() {
     TestKit.shutdownActorSystem(system)
@@ -44,6 +48,12 @@ abstract class EventsourcedAggregateRootSpec[T](_system: ActorSystem)(implicit a
       source = s"akka://Tests/user/$domain/$aggregateId",
       start = messageStart, occurrences = 1)
       .intercept {
+      when
+    }
+  }
+
+  def expectExceptionLogged[E <: Throwable](when: => Unit)(implicit t: ClassTag[E]){
+    EventFilter[E](occurrences = 1) intercept {
       when
     }
   }

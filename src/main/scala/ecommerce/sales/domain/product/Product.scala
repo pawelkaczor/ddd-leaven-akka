@@ -18,5 +18,4 @@ case class Product(
 
   def productId = snapshotId.aggregateId
   def version = snapshotId.sequenceNr
-  def timestamp = snapshotId.timestamp
 }

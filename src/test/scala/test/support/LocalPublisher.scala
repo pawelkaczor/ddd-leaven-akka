@@ -1,14 +1,13 @@
 package test.support
 
-import ddd.support.domain.AggregateRoot.Event
-import ddd.support.domain.event.EventPublisher
+import ddd.support.domain.event.{DomainEventMessage, EventPublisher}
 import akka.actor.Actor
 
 trait LocalPublisher extends EventPublisher {
   this: Actor =>
 
-  override def publish(event: Event) {
-    context.system.eventStream.publish(event)
+  override def publish(event: DomainEventMessage) {
+    context.system.eventStream.publish(event.payload)
   }
 
 }

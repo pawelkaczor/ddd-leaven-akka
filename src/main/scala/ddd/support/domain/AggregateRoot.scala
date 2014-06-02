@@ -5,7 +5,7 @@ import akka.persistence._
 import infrastructure.actor.GracefulPassivation
 import ddd.support.domain.error.AggregateRootNotInitializedException
 import AggregateRoot.Event
-import ddd.support.domain.event.{EventHandler, DomainEvent}
+import ddd.support.domain.event.{EventMessage, DomainEventMessage, EventHandler, DomainEvent}
 import akka.actor.Status.Failure
 import infrastructure.actor.PassivationConfig
 import ddd.support.domain.protocol.Acknowledged
@@ -41,8 +41,8 @@ trait AggregateRoot[S <: AggregateState]
   }
 
   override def receiveRecover: Receive = {
-    case event: Event =>
-      updateState(event)
+    case event: EventMessage =>
+      updateState(event.payload)
   }
 
   override def preRestart(reason: Throwable, message: Option[Any]) {
@@ -62,16 +62,19 @@ trait AggregateRoot[S <: AggregateState]
   }
 
   def raise(event: Event) {
-    persist(event) {
-      persistedEvent => {
+    persist(new EventMessage(payload = event, metaData = commandMessage.metaData)) {
+      persisted => {
         log.info("Event persisted: {}", event)
-        updateState(persistedEvent)
-        handle(persistedEvent)
+        updateState(event)
+        handle(toDomainEventMessage(persisted))
       }
     }
   }
 
-  override def handle(event: Event) {
+  def toDomainEventMessage(persisted: EventMessage) =
+    new DomainEventMessage(persisted, SnapshotId(aggregateId, lastSequenceNr))
+
+  override def handle(event: DomainEventMessage) {
     sender ! Acknowledged
   }
 

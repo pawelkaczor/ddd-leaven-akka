@@ -1,14 +1,15 @@
 package ddd.support.domain.event
 
-import java.util.Date
+import java.util.{UUID, Date}
 import ddd.support.domain.Message
 import ddd.support.domain.Message.MetaData
+import scala.collection.mutable.Map
 
-abstract class EventMessage(
+class EventMessage(
     val payload: DomainEvent,
-    val identifier: String,
-    val timestamp: Date,
-    val metaData: MetaData)
+    val identifier: String = UUID.randomUUID().toString,
+    val timestamp: Date = new Date,
+    val metaData: MetaData = Map.empty)
   extends Message(metaData) {
 
 }

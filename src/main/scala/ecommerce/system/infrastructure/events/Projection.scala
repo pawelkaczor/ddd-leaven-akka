@@ -4,6 +4,7 @@ import akka.actor.{ActorSystem, Props}
 import akka.camel.Ack
 import ddd.support.domain.event.DomainEventMessage
 import ddd.support.domain.protocol.ViewUpdated
+import akka.actor.Status.Failure
 
 object Projection {
 
@@ -24,8 +25,14 @@ abstract class Projection(spec: ProjectionSpec, sendEventAsAck: Boolean = true) 
   override def autoAck = false
 
   override def handle(eventMessage: DomainEventMessage) {
-    spec.apply(eventMessage)
-    sender ! toResponse(eventMessage)
+    try {
+      spec.apply(eventMessage)
+      sender ! toResponse(eventMessage)
+    } catch {
+      case ex: Exception =>
+        log.error("Projection of event {} failed. Reason: {}", eventMessage, ex.toString)
+        sender() ! Failure(ex)
+    }
   }
 
   def toResponse(eventMessage: DomainEventMessage): Any =

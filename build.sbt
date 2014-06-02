@@ -18,6 +18,7 @@ val project = Project(
       "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test",
       "ch.qos.logback" % "logback-classic" % "1.1.1",
       "org.scalatest" % "scalatest_2.10" % "2.1.6" % "test",
+      "org.mockito" % "mockito-core" % "1.9.5" % "test",
       "com.typesafe.akka" %% "akka-contrib" % akkaVersion,
       "com.typesafe.akka" %% "akka-camel" % akkaVersion,
       "org.apache.activemq" % "activemq-camel" % "5.9.1",

@@ -1,6 +1,6 @@
 package ecommerce.system.infrastructure.events
 
-import akka.actor.{ActorSystem, Props, Actor}
+import akka.actor.{ActorLogging, ActorSystem, Props, Actor}
 import akka.camel.{CamelMessage, Consumer}
 import ddd.support.domain.event.DomainEventMessage
 
@@ -19,7 +19,7 @@ object EventListener {
 
 }
 
-abstract class EventListener extends Actor with Consumer {
+abstract class EventListener extends Actor with Consumer with ActorLogging {
 
   override def receive: Receive = {
     case CamelMessage(em:DomainEventMessage, _) =>
