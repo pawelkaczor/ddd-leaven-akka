@@ -64,8 +64,8 @@ class ProductAcknowledgedPublicationSpec extends EventsourcedAggregateRootSpec[P
 
 
       // then
-      expectExceptionLogged[RedeliveryFailedException]()
       expectReply(Acknowledged)
+      expectExceptionLogged[RedeliveryFailedException]()
       expectReply(ViewUpdated)
 
     }
