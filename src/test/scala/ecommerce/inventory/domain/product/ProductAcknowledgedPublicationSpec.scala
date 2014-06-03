@@ -2,7 +2,7 @@ package ecommerce.inventory.domain.product
 
 import test.support.EventsourcedAggregateRootSpec
 import test.support.TestConfig._
-import ecommerce.inventory.domain.Product.AddProduct
+import ecommerce.inventory.domain.Product.{ProductAdded, AddProduct}
 import test.support.broker.EmbeddedBrokerTestSupport
 import ecommerce.system.infrastructure.events.{ProjectionSpec, Projection}
 import ecommerce.inventory.integration.InventoryQueue
@@ -22,7 +22,7 @@ class ProductAcknowledgedPublicationSpec extends EventsourcedAggregateRootSpec[P
   "Publication of new product" should {
     "be explicitly acknowledged" in {
       // given
-      val inventoryQueue = system.actorOf(InventoryQueue.recipeForInOut, InventoryQueue.name)
+      val inventoryQueue = system.actorOf(InventoryQueue.props, InventoryQueue.name)
 
       implicit object ProductActorFactory extends AggregateRootActorFactory[Product] {
         override def props(passivationConfig: PassivationConfig): Props = {
@@ -36,12 +36,12 @@ class ProductAcknowledgedPublicationSpec extends EventsourcedAggregateRootSpec[P
 
       // when
       import DeliveryContext.Adjust._
-      office[Product] ! AddProduct("product-1", "product 1", Standard).requestDLR()
+      office[Product] ! AddProduct("product-1", "product 1", Standard).requestDLR[ViewUpdated]
 
 
       // then
       expectReply(Acknowledged)
-      expectReply(ViewUpdated)
+      expectReply(ViewUpdated(ProductAdded("product 1", Standard)))
 
     }
   }

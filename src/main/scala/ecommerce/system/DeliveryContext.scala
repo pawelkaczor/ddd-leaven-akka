@@ -5,11 +5,13 @@ import ddd.support.domain.Message
 import akka.actor.{ActorSystem, ActorRef}
 import scala.language.implicitConversions
 import ddd.support.domain.command.{Command, CommandMessage}
-import ddd.support.domain.protocol.Delivered
+import ddd.support.domain.protocol.Receipt
+import scala.collection.mutable
+import scala.reflect.ClassTag
 
 object DeliveryContext {
 
-  case object ReceiptRequested
+  case object ReceiptsRequested
   case object ReceiptRequester
   case object ReceiptMsg
 
@@ -28,15 +30,13 @@ object DeliveryContext {
         msg.withMetaAttribute(ReceiptRequester, serialize(requester))
       }
 
-      def withReceipt(receiptMsg: Delivered) = {
-        msg.withMetaAttribute(ReceiptMsg, receiptMsg)
-      }
-
       /**
        * dlr - delivery receipt
        */
-      def requestDLR() = {
-        msg.withMetaAttribute(ReceiptRequested, true)
+      def requestDLR[A](implicit t: ClassTag[A]) = {
+        msg.withMetaAttribute(ReceiptsRequested,
+          msg.tryGetMetaAttribute[Set[Class[_]]](ReceiptsRequested)
+            .getOrElse(Set[Class[_]]()).+(t.runtimeClass))
       }
     }
 
@@ -51,11 +51,22 @@ object DeliveryContext {
 
     override protected def system = _system
 
-    def receiptRequested = srcMsg.hasMetaAttribute(ReceiptRequested)
+    def anyReceiptRequested: Boolean = {
+      srcMsg.hasMetaAttribute(ReceiptsRequested)
+    }
+
+    def receiptRequested(receipt: Receipt): Boolean = {
+      srcMsg.tryGetMetaAttribute[Set[Class[_]]](ReceiptsRequested)
+        .exists(_.contains(receipt.getClass))
+    }
 
     def receiptRequester: ActorRef = deserialize(srcMsg.getMetaAttribute(ReceiptRequester))
 
-    def receipt: Delivered = srcMsg.tryGetMetaAttribute(ReceiptMsg).getOrElse(Delivered)
+    def sendReceiptIfRequested(receipt: Receipt): Unit = {
+      if (receiptRequested(receipt)) {
+        receiptRequester ! receipt
+      }
+    }
   }
 
 

@@ -41,7 +41,7 @@ class EventsPublishingClusterSpec extends ClusterSpec with ViewDatabase {
   }
 
   def registerGlobalInventoryOffice() {
-    val inventoryQueue = system.actorOf(InventoryQueue.recipeForInOnly, InventoryQueue.name)
+    val inventoryQueue = system.actorOf(InventoryQueue.props, InventoryQueue.name)
 
     implicit object ProductActorFactory extends AggregateRootActorFactory[Product] {
       override def props(passivationConfig: PassivationConfig): Props = {
@@ -70,7 +70,7 @@ class EventsPublishingClusterSpec extends ClusterSpec with ViewDatabase {
         enterBarrier("events published")
 
         val daos = new Daos(H2Driver)
-        Projection(InventoryQueue.EndpointUri, new InventoryProjection(viewDb, daos), sendEventAsAck = false)
+        Projection(InventoryQueue.EndpointUri, new InventoryProjection(viewDb, daos))
         val productFinder = system.actorOf(ProductFinder.props(viewDb, daos), ProductFinder.name)
 
         // Acknowledgment of publication of new products in catalog has not been requested, thus

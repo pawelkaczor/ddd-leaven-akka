@@ -7,41 +7,30 @@ import ddd.support.domain.protocol.ViewUpdated
 import akka.actor.Status.Failure
 
 object Projection {
-
-  def apply(endpoint: String, spec: ProjectionSpec, sendEventAsAck: Boolean = true)
-           (implicit system: ActorSystem) = {
-
-    val projectionName = s"${endpoint.split(':').last}Projection"
-
-    system.actorOf(Props(new Projection(spec, sendEventAsAck) {
+  def apply(endpoint: String, spec: ProjectionSpec)(implicit system: ActorSystem) = {
+    system.actorOf(Props(new Projection(spec) {
       override def endpointUri = endpoint
-    }), name = projectionName)
+    }), name = s"${endpoint.split(':').last}Projection")
   }
-
 }
 
-abstract class Projection(spec: ProjectionSpec, sendEventAsAck: Boolean = true) extends EventListener {
+abstract class Projection(spec: ProjectionSpec) extends EventListener {
 
   override def autoAck = false
 
-  override def handle(eventMessage: DomainEventMessage) {
+  implicit def system = context.system
+  import ecommerce.system.DeliveryContext._
+
+  override def handle(em: DomainEventMessage) {
     try {
-      spec.apply(eventMessage)
-      sender ! toResponse(eventMessage)
+      spec.apply(em)
+      sender ! Ack
+      em.sendReceiptIfRequested(ViewUpdated(em.payload))
     } catch {
       case ex: Exception =>
-        log.error("Projection of event {} failed. Reason: {}", eventMessage, ex.toString)
+        log.error("Projection of event {} failed. Reason: {}", em, ex.toString)
         sender() ! Failure(ex)
     }
   }
-
-  def toResponse(eventMessage: DomainEventMessage): Any =
-    if (sendEventAsAck) {
-      implicit def system = context.system
-      import ecommerce.system.DeliveryContext.Adjust._
-      eventMessage.withReceipt(ViewUpdated)
-    } else {
-      Ack
-    }
 
 }

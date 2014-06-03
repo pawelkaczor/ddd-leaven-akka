@@ -21,7 +21,7 @@ class ProductReliablePublishingSpec extends EventsourcedAggregateRootSpec[Produc
   "New product" should {
     "be published using inventory queue" in {
       // given
-      val inventoryQueuePath = system.actorOf(InventoryQueue.recipeForInOnly, InventoryQueue.name).path
+      val inventoryQueuePath = system.actorOf(InventoryQueue.props, InventoryQueue.name).path
 
       implicit object ProductActorFactory extends AggregateRootActorFactory[Product] {
         override def props(passivationConfig: PassivationConfig): Props = {

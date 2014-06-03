@@ -5,7 +5,6 @@ import akka.persistence._
 import ddd.support.domain.AggregateRoot
 import scala.concurrent.duration._
 import ddd.support.domain.event.{EventMessage, EventPublisher, DomainEventMessage}
-import ddd.support.domain.protocol.Published
 import akka.persistence.RedeliverFailure
 import scala.Some
 import akka.actor.SupervisorStrategy.Escalate
@@ -45,8 +44,8 @@ trait ReliablePublisher extends EventsourcedProcessor with EventPublisher {
 
   override def publish(event: DomainEventMessage) {
     import ecommerce.system.DeliveryContext.Adjust._
-    if (event.receiptRequested && !recoveryRunning) {
-      event.withReceipt(Published).withReceiptRequester(sender())
+    if (event.anyReceiptRequested && !recoveryRunning) {
+      event.withReceiptRequester(sender())
     }
     channel ! Deliver(Persistent(event), target)
   }

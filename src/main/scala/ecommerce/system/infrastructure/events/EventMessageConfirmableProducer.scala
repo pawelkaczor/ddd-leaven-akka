@@ -6,7 +6,6 @@ import infrastructure.akka.SerializationSupportForActor
 import akka.persistence.{Persistent, ConfirmablePersistent}
 import ddd.support.domain.event.EventMessage
 import EventMessageConfirmableProducer._
-import ecommerce.system.DeliveryContext._
 
 object EventMessageConfirmableProducer {
   val ConfirmableInfo = "ConfirmableInfo"
@@ -26,9 +25,6 @@ abstract class EventMessageConfirmableProducer extends Actor with Producer with 
     msg match {
       case CamelMessage(eventMsg:EventMessage, _) =>
         rewrapToConfirmable(eventMsg).confirm()
-        if (eventMsg.receiptRequested) {
-          eventMsg.receiptRequester ! eventMsg.receipt
-        }
       case Status.Failure(ex) =>
         log.error("Event delivery to {} failed. Reason: {}", endpointUri, ex.toString)
     }

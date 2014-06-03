@@ -1,3 +1,5 @@
 package ddd.support.domain.protocol
 
-case object ViewUpdated extends Delivered
+import ddd.support.domain.event.DomainEvent
+
+case class ViewUpdated(event: DomainEvent) extends Receipt

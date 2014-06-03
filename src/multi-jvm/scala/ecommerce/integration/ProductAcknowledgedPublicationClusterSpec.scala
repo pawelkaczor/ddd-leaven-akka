@@ -10,7 +10,7 @@ import ClusterConfig._
 import infrastructure.akka.broker.ActiveMQMessaging
 import test.support.view.{Daos, ViewsTestSupport}
 import scala.slick.driver.H2Driver
-import ecommerce.inventory.domain.Product.AddProduct
+import ecommerce.inventory.domain.Product.{ProductAdded, AddProduct}
 import ecommerce.inventory.domain.Product
 import infrastructure.actor.PassivationConfig
 import ddd.support.domain.protocol.{ViewUpdated, Acknowledged}
@@ -43,7 +43,7 @@ class ProductAcknowledgedPublicationClusterSpec extends ClusterSpec with ViewDat
   }
 
   def registerGlobalInventoryOffice() {
-    val inventoryQueue = system.actorOf(InventoryQueue.recipeForInOut, InventoryQueue.name)
+    val inventoryQueue = system.actorOf(InventoryQueue.props, InventoryQueue.name)
 
     implicit object ProductActorFactory extends AggregateRootActorFactory[Product] {
       override def props(config: PassivationConfig): Props = {
@@ -63,11 +63,11 @@ class ProductAcknowledgedPublicationClusterSpec extends ClusterSpec with ViewDat
 
         // when
         import DeliveryContext.Adjust._
-        inventoryOffice ! AddProduct("product-1", "product 1", Standard).requestDLR()
+        inventoryOffice ! AddProduct("product-1", "product 1", Standard).requestDLR[ViewUpdated]
 
         // then
         expectReply(Acknowledged)
-        expectReply(ViewUpdated)
+        expectReply(ViewUpdated(ProductAdded("product 1", Standard)))
 
         enterBarrier("publication acknowledged")
       }

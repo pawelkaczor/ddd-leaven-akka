@@ -9,9 +9,8 @@ object InventoryQueue {
 
   val name = "inventoryQueue"
 
-  def recipeForInOnly = Props(new InventoryQueue with Oneway)
+  def props = Props(new InventoryQueue with Oneway)
 
-  def recipeForInOut = Props(new InventoryQueue)
 }
 
 class InventoryQueue extends EventMessageConfirmableProducer {
