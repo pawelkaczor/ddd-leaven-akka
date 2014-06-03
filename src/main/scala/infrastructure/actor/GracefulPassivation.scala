@@ -1,12 +1,12 @@
 package infrastructure.actor
 
-import akka.actor.{ReceiveTimeout, Actor}
-import scala.concurrent.duration.Duration
+import akka.actor.{PoisonPill, ReceiveTimeout, Actor}
+import scala.concurrent.duration._
 
 @SerialVersionUID(1L)
 case class Passivate(stopMessage: Any)
 
-case class PassivationConfig(passivationMsg: Any, inactivityTimeout: Duration)
+case class PassivationConfig(passivationMsg: Any = PoisonPill, inactivityTimeout: Duration = 30.minutes)
 
 trait GracefulPassivation extends Actor {
 

@@ -42,15 +42,12 @@ class Office[T <: AggregateRoot[_]](inactivityTimeout: Duration = 1.minutes)(
     clerkFactory: AggregateRootActorFactory[T])
   extends ActorContextCreationSupport with Actor with ActorLogging {
 
-
   override def aroundReceive(receive: Actor.Receive, msg: Any): Unit = {
     receive.applyOrElse(msg match {
       case c: Command => CommandMessage(c)
       case other => other
     }, unhandled)
   }
-
-
 
   def receive: Receive = {
     // TODO (passivation) in-between receiving Passivate and Terminated the office should buffer all incoming messages

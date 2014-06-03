@@ -32,7 +32,7 @@ abstract class EventsourcedAggregateRootSpec[T](_system: ActorSystem)(implicit a
   def expectEventPublished[E](implicit t: ClassTag[E]) {
     val probe = TestProbe()
     system.eventStream.subscribe(probe.ref, t.runtimeClass)
-    probe.expectMsgClass(2 seconds, t.runtimeClass)
+    probe.expectMsgClass(10 seconds, t.runtimeClass)
   }
 
   def expectEventPersisted[E](aggregateId: String)(when: => Unit)(implicit t: ClassTag[E], idResolution: AggregateIdResolution[T]) {

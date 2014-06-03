@@ -9,7 +9,6 @@ import ddd.support.domain.protocol.Published
 import akka.persistence.RedeliverFailure
 import scala.Some
 import akka.actor.SupervisorStrategy.Escalate
-import akka.actor.Status.Failure
 
 trait ReliablePublisher extends EventsourcedProcessor with EventPublisher {
   this: AggregateRoot[_] =>
