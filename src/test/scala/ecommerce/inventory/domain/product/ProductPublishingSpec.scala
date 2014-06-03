@@ -2,7 +2,7 @@ package ecommerce.inventory.domain.product
 
 import ecommerce.sales.domain.reservation.Reservation._
 
-import test.support.{EventLocalConfirmablePublisher, EventsourcedAggregateRootSpec}
+import test.support.{ReliableLocalPublisher, EventsourcedAggregateRootSpec}
 import ddd.support.domain.Office._
 import test.support.TestConfig._
 import akka.actor._
@@ -16,7 +16,7 @@ import infrastructure.akka.event.ReliablePublisher
 class ProductPublishingSpec extends EventsourcedAggregateRootSpec[Product](testSystem)  {
 
   def localPublisher(implicit context: ActorContext) = {
-    context.system.actorOf(Props[EventLocalConfirmablePublisher], name="localEventPublisher")
+    context.system.actorOf(Props[ReliableLocalPublisher], name="localEventPublisher")
   }
 
   "New product" should {

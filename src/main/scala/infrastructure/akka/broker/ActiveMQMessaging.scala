@@ -17,6 +17,7 @@ trait ActiveMQMessaging {
   val camel = CamelExtension(system)
   val activeMQComp = activeMQComponent(settings.BrokerUrl)
   activeMQComp.setDeliveryPersistent(false)
+  activeMQComp.setRequestTimeout(500)
   //activeMQComp.setAcknowledgementMode(javax.jms.Session.CLIENT_ACKNOWLEDGE)
   camel.context.addComponent("activemq", activeMQComp)
 
