@@ -42,7 +42,7 @@ trait AggregateRoot[S <: AggregateState]
 
   override def receiveRecover: Receive = {
     case event: EventMessage =>
-      updateState(event.payload)
+      updateState(event.event)
   }
 
   override def preRestart(reason: Throwable, message: Option[Any]) {
@@ -62,7 +62,7 @@ trait AggregateRoot[S <: AggregateState]
   }
 
   def raise(event: Event) {
-    persist(new EventMessage(payload = event, metaData = commandMessage.metaData)) {
+    persist(new EventMessage(event = event, metaData = commandMessage.metaData)) {
       persisted => {
         log.info("Event persisted: {}", event)
         updateState(event)

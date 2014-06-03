@@ -6,8 +6,8 @@ import akka.actor.Actor
 trait LocalPublisher extends EventPublisher {
   this: Actor =>
 
-  override def publish(event: DomainEventMessage) {
-    context.system.eventStream.publish(event.payload)
+  override def publish(em: DomainEventMessage) {
+    context.system.eventStream.publish(em.event)
   }
 
 }

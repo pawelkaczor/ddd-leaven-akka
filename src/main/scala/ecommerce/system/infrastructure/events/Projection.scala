@@ -25,7 +25,7 @@ abstract class Projection(spec: ProjectionSpec) extends EventListener {
     try {
       spec.apply(em)
       sender ! Ack
-      em.sendReceiptIfRequested(ViewUpdated(em.payload))
+      em.sendReceiptIfRequested(ViewUpdated(em.event))
     } catch {
       case ex: Exception =>
         log.error("Projection of event {} failed. Reason: {}", em, ex.toString)

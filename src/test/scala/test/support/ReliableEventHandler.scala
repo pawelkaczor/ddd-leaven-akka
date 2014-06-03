@@ -17,7 +17,7 @@ abstract class ReliableEventHandler extends Actor {
 
   override def receive: Receive = {
     case p @ ConfirmablePersistent(em:DomainEventMessage, _, _) =>
-      handle(em.payload)
+      handle(em.event)
       p.confirm()
   }
 

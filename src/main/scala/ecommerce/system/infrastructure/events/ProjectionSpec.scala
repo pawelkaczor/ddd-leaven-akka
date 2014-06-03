@@ -13,7 +13,7 @@ abstract class ProjectionSpec(implicit val log: LoggingAdapter) extends Function
 
   override def apply(event: DomainEventMessage): Unit =
     if (!isApplied(event))
-      apply(event.snapshotId, event.payload)
+      apply(event.snapshotId, event.event)
 
   def apply(snapshotId: SnapshotId, event: DomainEvent)
 }

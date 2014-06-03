@@ -32,7 +32,7 @@ class ProductReliablePublishingSpec extends EventsourcedAggregateRootSpec[Produc
       }
 
       EventListener(InventoryQueue.EndpointUri) {
-        eventMessage => system.eventStream.publish(eventMessage.payload)
+        eventMessage => system.eventStream.publish(eventMessage.event)
       }
 
       // when

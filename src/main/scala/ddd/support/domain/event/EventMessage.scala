@@ -6,7 +6,7 @@ import ddd.support.domain.Message.MetaData
 import scala.collection.mutable.Map
 
 class EventMessage(
-    val payload: DomainEvent,
+    val event: DomainEvent,
     val identifier: String = UUID.randomUUID().toString,
     val timestamp: Date = new Date,
     val metaData: MetaData = Map.empty)

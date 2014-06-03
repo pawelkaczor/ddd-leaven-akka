@@ -7,13 +7,13 @@ import scala.collection.mutable.Map
 
 case class DomainEventMessage(
     snapshotId: SnapshotId,
-    override val payload: DomainEvent,
+    override val event: DomainEvent,
     override val identifier: String = UUID.randomUUID().toString,
     override val timestamp: Date = new Date,
     override val metaData: MetaData = Map.empty)
-  extends EventMessage(payload, identifier, timestamp, metaData) {
+  extends EventMessage(event, identifier, timestamp, metaData) {
 
-  def this(em: EventMessage, s: SnapshotId) = this(s, em.payload, em.identifier, em.timestamp, em.metaData)
+  def this(em: EventMessage, s: SnapshotId) = this(s, em.event, em.identifier, em.timestamp, em.metaData)
 
   def aggregateId = snapshotId.aggregateId
 
