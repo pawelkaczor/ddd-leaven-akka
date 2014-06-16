@@ -1,26 +1,25 @@
 package ecommerce.sales.domain.reservation
 
-import scala.concurrent.duration._
-import ddd.support.domain.protocol.Acknowledged
-import ddd.support.domain.Office._
-import infrastructure.cluster.ShardResolution.ShardResolutionStrategy
-import ecommerce.sales.domain.reservation.Reservation._
-import akka.testkit.TestProbe
-import scala.reflect.ClassTag
-import infrastructure.cluster.ReservationShardResolution
-import ddd.support.domain.AggregateRootActorFactory
-import infrastructure.actor.PassivationConfig
 import akka.actor.Props
-import test.support.{ClusterConfig, ClusterSpec, LocalPublisher}
-import ddd.support.domain.command.CommandMessage
+import akka.testkit.TestProbe
+import ddd.support.domain.AggregateRootActorFactory
+import ddd.support.domain.Office._
+import ddd.support.domain.protocol.Acknowledged
+import ecommerce.sales.domain.reservation.Reservation._
+import infrastructure.actor.PassivationConfig
+import infrastructure.cluster.ReservationShardResolution
+import infrastructure.cluster.ShardResolution.ShardResolutionStrategy
+import test.support.{ ClusterConfig, ClusterSpec, LocalPublisher }
 
+import scala.concurrent.duration._
+import scala.reflect.ClassTag
 
 class ReservationGlobalOfficeSpecMultiJvmNode1 extends ReservationGlobalOfficeSpec
 class ReservationGlobalOfficeSpecMultiJvmNode2 extends ReservationGlobalOfficeSpec
 
 class ReservationGlobalOfficeSpec extends ClusterSpec {
 
-  import ClusterConfig._
+  import test.support.ClusterConfig._
 
   implicit val reservationActorFactory = new ReservationActorFactory
 
@@ -54,8 +53,8 @@ class ReservationGlobalOfficeSpec extends ClusterSpec {
 
       on(node1) {
         expectEventPublished[ReservationCreated] {
-            reservationOffice ! CreateReservation("reservation-1", "client1")
-            reservationOffice ! CreateReservation("reservation-2", "client2")
+          reservationOffice ! CreateReservation("reservation-1", "client1")
+          reservationOffice ! CreateReservation("reservation-2", "client2")
         }
       }
 

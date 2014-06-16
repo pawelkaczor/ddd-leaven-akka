@@ -1,8 +1,8 @@
 package test.support
 
-import akka.actor.{Props, Actor}
+import akka.actor.{ Props, Actor }
 import akka.persistence.ConfirmablePersistent
-import ddd.support.domain.event.{DomainEvent, DomainEventMessage}
+import ddd.support.domain.event.{ DomainEvent, DomainEventMessage }
 
 object ReliableEventHandler {
 
@@ -16,7 +16,7 @@ object ReliableEventHandler {
 abstract class ReliableEventHandler extends Actor {
 
   override def receive: Receive = {
-    case p @ ConfirmablePersistent(em:DomainEventMessage, _, _) =>
+    case p @ ConfirmablePersistent(em: DomainEventMessage, _, _) =>
       handle(em.event)
       p.confirm()
   }

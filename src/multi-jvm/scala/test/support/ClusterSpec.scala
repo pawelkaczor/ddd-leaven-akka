@@ -3,8 +3,8 @@ package test.support
 import akka.remote.testkit.MultiNodeSpec
 import akka.testkit.ImplicitSender
 import java.io.File
-import akka.actor.{Identify, Props, ActorIdentity}
-import akka.persistence.journal.leveldb.{SharedLeveldbStore, SharedLeveldbJournal}
+import akka.actor.{ Identify, Props, ActorIdentity }
+import akka.persistence.journal.leveldb.{ SharedLeveldbStore, SharedLeveldbJournal }
 import akka.persistence.Persistence
 import infrastructure.cluster.ShardingSupport
 import akka.remote.testconductor.RoleName
@@ -70,11 +70,11 @@ abstract class ClusterSpec extends MultiNodeSpec(ClusterConfig)
     runOn(nodes: _*)(thunk)
   }
 
-  def expectReply[T](obj: T)  {
+  def expectReply[T](obj: T) {
     expectMsg(20.seconds, obj)
   }
 
-  def expectReply[T](implicit tag: ClassTag[T])  {
+  def expectReply[T](implicit tag: ClassTag[T]) {
     expectMsgClass(20.seconds, tag.runtimeClass)
   }
 

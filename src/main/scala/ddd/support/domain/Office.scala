@@ -1,30 +1,29 @@
 package ddd.support.domain
 
 import akka.actor._
-import infrastructure.actor.{PassivationConfig, Passivate, ActorContextCreationSupport}
-import scala.reflect.ClassTag
 import akka.contrib.pattern.ClusterSharding
+import ddd.support.domain.command.{ Command, CommandMessage }
+import infrastructure.actor.{ ActorContextCreationSupport, Passivate, PassivationConfig }
+
 import scala.concurrent.duration._
-import infrastructure.actor.Passivate
-import infrastructure.actor.PassivationConfig
-import ddd.support.domain.command.{Command, CommandMessage}
+import scala.reflect.ClassTag
 
 object Office {
 
   def office[T <: AggregateRoot[_]](
-      implicit classTag: ClassTag[T],
-      caseIdResolution: AggregateIdResolution[T],
-      clerkFactory: AggregateRootActorFactory[T],
-      system: ActorRefFactory): ActorRef = {
+    implicit classTag: ClassTag[T],
+    caseIdResolution: AggregateIdResolution[T],
+    clerkFactory: AggregateRootActorFactory[T],
+    system: ActorRefFactory): ActorRef = {
 
     office[T]()
   }
 
   def office[T <: AggregateRoot[_]](inactivityTimeout: Duration = 1.minute)(
-      implicit classTag: ClassTag[T],
-      caseIdResolution: AggregateIdResolution[T],
-      clerkFactory: AggregateRootActorFactory[T],
-      system: ActorRefFactory): ActorRef = {
+    implicit classTag: ClassTag[T],
+    caseIdResolution: AggregateIdResolution[T],
+    clerkFactory: AggregateRootActorFactory[T],
+    system: ActorRefFactory): ActorRef = {
 
     system.actorOf(Props(new Office[T](inactivityTimeout)), officeName(classTag))
   }
@@ -37,9 +36,9 @@ object Office {
 }
 
 class Office[T <: AggregateRoot[_]](inactivityTimeout: Duration = 1.minutes)(
-    implicit arClassTag: ClassTag[T],
-    caseIdResolution: AggregateIdResolution[T],
-    clerkFactory: AggregateRootActorFactory[T])
+  implicit arClassTag: ClassTag[T],
+  caseIdResolution: AggregateIdResolution[T],
+  clerkFactory: AggregateRootActorFactory[T])
   extends ActorContextCreationSupport with Actor with ActorLogging {
 
   override def aroundReceive(receive: Actor.Receive, msg: Any): Unit = {
@@ -63,7 +62,7 @@ class Office[T <: AggregateRoot[_]](inactivityTimeout: Duration = 1.minutes)(
   def resolveCaseId(msg: Command) = caseIdResolution.aggregateIdResolver(msg)
 
   def assignClerk(caseProps: Props, caseId: String): ActorRef = getOrCreateChild(caseProps, caseId)
-  
+
   def dismiss(clerk: ActorRef, stopMessage: Any) {
     log.info(s"Passivating $sender")
     clerk ! stopMessage

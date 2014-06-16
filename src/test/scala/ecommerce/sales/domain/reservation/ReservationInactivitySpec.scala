@@ -8,7 +8,7 @@ import ddd.support.domain.Office._
 import test.support.TestConfig._
 import ddd.support.domain.protocol.Acknowledged
 
-class ReservationInactivitySpec extends EventsourcedAggregateRootSpec[Reservation](testSystem)  {
+class ReservationInactivitySpec extends EventsourcedAggregateRootSpec[Reservation](testSystem) {
 
   import ReservationSpec.ReservationActorFactory
 

@@ -1,11 +1,11 @@
 package ecommerce.inventory.domain.product
 
-import akka.actor.{Props, ActorRef}
+import akka.actor.{ Props, ActorRef }
 import ecommerce.sales.domain.reservation.Reservation._
-import test.support.{LocalPublisher, EventsourcedAggregateRootSpec}
+import test.support.{ LocalPublisher, EventsourcedAggregateRootSpec }
 import ddd.support.domain.Office._
 import test.support.TestConfig._
-import ecommerce.inventory.domain.Product.{AddProduct, ProductAdded}
+import ecommerce.inventory.domain.Product.{ AddProduct, ProductAdded }
 import ecommerce.sales.sharedkernel.ProductType
 import ddd.support.domain.AggregateRootActorFactory
 import infrastructure.actor.PassivationConfig
@@ -17,7 +17,7 @@ object ProductSpec {
   }
 }
 
-class ProductSpec extends EventsourcedAggregateRootSpec[Product](testSystem)  {
+class ProductSpec extends EventsourcedAggregateRootSpec[Product](testSystem) {
   import ProductSpec._
 
   var inventoryOffice: ActorRef = system.deadLetters
@@ -41,6 +41,5 @@ class ProductSpec extends EventsourcedAggregateRootSpec[Product](testSystem)  {
       }
     }
   }
-
 
 }

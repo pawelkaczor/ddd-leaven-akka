@@ -1,12 +1,12 @@
 package ecommerce.system
 
 import _root_.infrastructure.akka.SerializationSupport
+import akka.actor.{ ActorRef, ActorSystem }
 import ddd.support.domain.Message
-import akka.actor.{ActorSystem, ActorRef}
-import scala.language.implicitConversions
-import ddd.support.domain.command.{Command, CommandMessage}
+import ddd.support.domain.command.{ Command, CommandMessage }
 import ddd.support.domain.protocol.Receipt
-import scala.collection.mutable
+
+import scala.language.implicitConversions
 import scala.reflect.ClassTag
 
 object DeliveryContext {
@@ -23,7 +23,6 @@ object DeliveryContext {
       new Confirmable(message)
     }
 
-    
     case class Confirmable(msg: Message)(implicit _system: ActorSystem) extends ReadonlyConfirmable(msg) {
 
       def withReceiptRequester(requester: ActorRef) = {
@@ -42,7 +41,6 @@ object DeliveryContext {
 
   }
 
-  
   implicit def toReadonlyConfirmable(message: Message)(implicit system: ActorSystem) = {
     new ReadonlyConfirmable(message)
   }
@@ -68,6 +66,5 @@ object DeliveryContext {
       }
     }
   }
-
 
 }

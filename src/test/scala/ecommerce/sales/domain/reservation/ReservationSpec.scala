@@ -1,14 +1,14 @@
 package ecommerce.sales.domain.reservation
 
-import akka.actor.{Props, ActorRef}
+import akka.actor.{ Props, ActorRef }
 import ecommerce.sales.domain.reservation.Reservation._
 import ecommerce.sales.domain.reservation.Reservation.ReserveProduct
 import ecommerce.sales.domain.reservation.Reservation.CreateReservation
 import ecommerce.sales.domain.reservation.Reservation.ReservationCreated
 import ecommerce.sales.domain.reservation.Reservation.ProductReserved
 
-import ecommerce.sales.sharedkernel.{ProductType, Money}
-import test.support.{LocalPublisher, EventsourcedAggregateRootSpec}
+import ecommerce.sales.sharedkernel.{ ProductType, Money }
+import test.support.{ LocalPublisher, EventsourcedAggregateRootSpec }
 import ddd.support.domain.Office._
 import test.support.TestConfig._
 import ddd.support.domain.protocol.Acknowledged
@@ -23,7 +23,7 @@ object ReservationSpec {
 
 }
 
-class ReservationSpec extends EventsourcedAggregateRootSpec[Reservation](testSystem)  {
+class ReservationSpec extends EventsourcedAggregateRootSpec[Reservation](testSystem) {
   import ReservationSpec._
 
   var reservationOffice: ActorRef = system.deadLetters
@@ -35,7 +35,6 @@ class ReservationSpec extends EventsourcedAggregateRootSpec[Reservation](testSys
   after {
     ensureActorTerminated(reservationOffice)
   }
-
 
   "Reservation clerk" should {
     "communicate outcome with events" in {
@@ -53,7 +52,7 @@ class ReservationSpec extends EventsourcedAggregateRootSpec[Reservation](testSys
       reservationOffice = office[Reservation]
 
       val product2 = Product("product2", "productName", ProductType.Standard, Some(Money(10)))
-      val quantity= 1
+      val quantity = 1
       expectEventPersisted(ProductReserved(reservationId, product2, quantity))(reservationId) {
         reservationOffice ! ReserveProduct(reservationId, "product2", quantity)
       }

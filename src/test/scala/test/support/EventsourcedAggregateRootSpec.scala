@@ -1,10 +1,10 @@
 package test.support
 
 import akka.actor._
-import akka.testkit.{TestProbe, EventFilter, ImplicitSender, TestKit}
+import akka.testkit.{ TestProbe, EventFilter, ImplicitSender, TestKit }
 import akka.util.Timeout
-import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, Matchers, WordSpecLike}
-import scala.concurrent.{Future, Await}
+import org.scalatest.{ BeforeAndAfter, BeforeAndAfterAll, Matchers, WordSpecLike }
+import scala.concurrent.{ Future, Await }
 import scala.concurrent.duration._
 import scala.reflect.ClassTag
 import ddd.support.domain.AggregateIdResolution
@@ -48,11 +48,11 @@ abstract class EventsourcedAggregateRootSpec[T](_system: ActorSystem)(implicit a
       source = s"akka://Tests/user/$domain/$aggregateId",
       start = messageStart, occurrences = 1)
       .intercept {
-      when
-    }
+        when
+      }
   }
 
-  def expectExceptionLogged[E <: Throwable](when: => Unit)(implicit t: ClassTag[E]){
+  def expectExceptionLogged[E <: Throwable](when: => Unit)(implicit t: ClassTag[E]) {
     EventFilter[E](occurrences = 1) intercept {
       when
     }
@@ -63,8 +63,8 @@ abstract class EventsourcedAggregateRootSpec[T](_system: ActorSystem)(implicit a
       source = s"akka://Tests/user/$domain",
       start = messageStart, occurrences = 1)
       .intercept {
-      when
-    }
+        when
+      }
   }
 
   def expectFailure[E](awaitable: Future[Any])(implicit t: ClassTag[E]) {

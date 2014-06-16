@@ -4,7 +4,7 @@ import org.apache.activemq.broker.BrokerService
 import infrastructure.EcommerceSettings
 import java.io.IOException
 
-trait EmbeddedActiveMQRunner{
+trait EmbeddedActiveMQRunner {
   def settings: EcommerceSettings
   val broker = new BrokerService()
   broker.setPersistent(false)

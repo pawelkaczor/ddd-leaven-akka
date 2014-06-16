@@ -2,9 +2,9 @@ package ecommerce.sales.domain.reservation
 
 import ReservationStatus._
 import java.util.Date
-import ecommerce.sales.sharedkernel.{ProductType, Money}
+import ecommerce.sales.sharedkernel.{ ProductType, Money }
 import ddd.support.domain._
-import ddd.support.domain.event.{EventPublisher, DomainEvent}
+import ddd.support.domain.event.{ EventPublisher, DomainEvent }
 import ecommerce.sales.domain.product.Product
 import ecommerce.sales.domain.reservation.Reservation.ProductReserved
 import ecommerce.sales.domain.reservation.errors.ReservationCreationException
@@ -28,7 +28,7 @@ object Reservation {
 
   def processorId(aggregateId: String) = "Reservations/" + aggregateId
 
-  implicit val idResolution  = new AggregateIdResolution[Reservation]
+  implicit val idResolution = new AggregateIdResolution[Reservation]
 
   // Commands
   sealed trait Command extends command.Command {
@@ -58,30 +58,30 @@ abstract class Reservation(override val passivationConfig: PassivationConfig) ex
   }
 
   override def handleCommand: Receive = {
-      case CreateReservation(reservationId, clientId) =>
-        if (initialized) {
-          throw new ReservationCreationException(s"Reservation $reservationId already exists")
-        } else {
-          raise(ReservationCreated(reservationId, clientId))
-        }
+    case CreateReservation(reservationId, clientId) =>
+      if (initialized) {
+        throw new ReservationCreationException(s"Reservation $reservationId already exists")
+      } else {
+        raise(ReservationCreated(reservationId, clientId))
+      }
 
-      case ReserveProduct(reservationId, productId, quantity) =>
-        if (state.status eq Closed) {
-          throw new ReservationOperationException(s"Reservation $reservationId is closed", reservationId)
-        } else {
-          // TODO fetch product detail
-          // TODO fetch price for the client
-          val product = Product(SnapshotId(productId, 0), "productName", ProductType.Standard, Some(Money(10)))
-          raise(ProductReserved(reservationId, product, quantity))
-        }
+    case ReserveProduct(reservationId, productId, quantity) =>
+      if (state.status eq Closed) {
+        throw new ReservationOperationException(s"Reservation $reservationId is closed", reservationId)
+      } else {
+        // TODO fetch product detail
+        // TODO fetch price for the client
+        val product = Product(SnapshotId(productId, 0), "productName", ProductType.Standard, Some(Money(10)))
+        raise(ProductReserved(reservationId, product, quantity))
+      }
 
-      case CloseReservation(reservationId) =>
-        raise(ReservationClosed(reservationId))
+    case CloseReservation(reservationId) =>
+      raise(ReservationClosed(reservationId))
   }
 
 }
 
-case class State (
+case class State(
     clientId: String,
     status: ReservationStatus,
     items: List[ReservationItem],

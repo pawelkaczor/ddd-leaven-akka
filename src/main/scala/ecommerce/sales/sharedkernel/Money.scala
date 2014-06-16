@@ -1,8 +1,6 @@
 package ecommerce.sales.sharedkernel
 
 import java.util.Currency
-import java.lang.String
-
 
 object Money {
 
@@ -24,7 +22,7 @@ case class Money(
   val value = round(BigDecimal(doubleValue))
 
   def isZero(decimal: BigDecimal): Boolean = {
-    decimal == 0
+    decimal == BigDecimal(0)
   }
 
   private def compatibleCurrency(money: Money): Boolean = {
@@ -76,6 +74,5 @@ case class Money(
   override def toString = {
     "%0$.2f %s".format(round(value), getCurrency.getSymbol)
   }
-
 
 }
