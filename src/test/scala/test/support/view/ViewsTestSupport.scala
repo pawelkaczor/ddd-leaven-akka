@@ -1,6 +1,6 @@
 package test.support.view
 
-import org.scalatest.{Suite, BeforeAndAfterAll}
+import org.scalatest.{ Suite, BeforeAndAfterAll }
 import org.h2.tools.Server._
 import scala.slick.driver.H2Driver
 import infrastructure.view.ViewDatabase
@@ -22,7 +22,11 @@ trait ViewsTestSupport extends ViewDatabase with BeforeAndAfterAll {
     import dal.profile.simple._
 
     viewDb withSession { implicit session: Session =>
-      dal.drop
+      try {
+        dal.drop
+      } catch {
+        case ex: Exception => // ignore
+      }
       dal.create
     }
 
