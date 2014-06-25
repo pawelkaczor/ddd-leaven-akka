@@ -1,6 +1,19 @@
 package infrastructure.actor
 
-import akka.actor.{ ActorLogging, ActorContext, Props, ActorRef }
+import akka.actor._
+
+import scala.language.implicitConversions
+
+object CreationSupport {
+  implicit def topLevelSupervisor(implicit system: ActorSystem): CreationSupport = {
+    new CreationSupport {
+      override def getChild(name: String): Option[ActorRef] = None
+      override def createChild(props: Props, name: String): ActorRef = {
+        system.actorOf(props, name)
+      }
+    }
+  }
+}
 
 trait CreationSupport {
   def getChild(name: String): Option[ActorRef]
@@ -19,4 +32,3 @@ trait ActorContextCreationSupport extends CreationSupport {
     actor
   }
 }
-

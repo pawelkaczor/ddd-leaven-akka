@@ -1,22 +1,23 @@
 package ecommerce.sales.domain.reservation
 
-import ecommerce.sales.domain.reservation.Reservation._
-import scala.concurrent.duration._
-
-import test.support.EventsourcedAggregateRootSpec
-import ddd.support.domain.Office._
-import test.support.TestConfig._
+import ecommerce.system.infrastructure.office.Office._
 import ddd.support.domain.protocol.Acknowledged
+import ecommerce.sales.domain.reservation.Reservation._
+import test.support.EventsourcedAggregateRootSpec
+import test.support.LocalOffice._
+import test.support.TestConfig._
+
+import scala.concurrent.duration._
 
 class ReservationInactivitySpec extends EventsourcedAggregateRootSpec[Reservation](testSystem) {
 
-  import ReservationSpec.ReservationActorFactory
+  implicit def reservationActorFactory = ReservationSpec.reservationActorFactory(50.milliseconds)
 
   "Reservation office" should {
     "passivate idle clerks" in {
       // given
       val reservationId = "reservation3"
-      val reservationOffice = office[Reservation](inactivityTimeout = 50.milliseconds)
+      val reservationOffice = office[Reservation]
 
       // when
       reservationOffice ! CreateReservation(reservationId, "client1")

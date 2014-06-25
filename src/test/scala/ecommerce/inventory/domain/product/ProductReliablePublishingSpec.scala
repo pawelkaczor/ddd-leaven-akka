@@ -1,20 +1,19 @@
 package ecommerce.inventory.domain.product
 
-import ecommerce.sales.domain.reservation.Reservation._
-
-import test.support.EventsourcedAggregateRootSpec
-import ddd.support.domain.Office._
-import test.support.TestConfig._
 import akka.actor._
-import infrastructure.actor.PassivationConfig
 import ddd.support.domain.AggregateRootActorFactory
-import ecommerce.inventory.domain.Product.{AddProduct, ProductAdded}
-import ecommerce.sales.sharedkernel.ProductType
-import test.support.broker.EmbeddedBrokerTestSupport
-import ecommerce.system.infrastructure.events.EventListener
-import ecommerce.inventory.integration.InventoryQueue
 import ecommerce.inventory.domain.Product
+import ecommerce.inventory.domain.Product.{ AddProduct, ProductAdded }
+import ecommerce.inventory.integration.InventoryQueue
+import ecommerce.sales.sharedkernel.ProductType
+import ecommerce.system.infrastructure.office.Office._
+import infrastructure.actor.PassivationConfig
 import infrastructure.akka.event.ReliablePublisher
+import test.support.{ LocalOffice, EventsourcedAggregateRootSpec }
+import test.support.TestConfig._
+import test.support.broker.EmbeddedBrokerTestSupport
+import LocalOffice._
+import ecommerce.system.infrastructure.events.EventListener
 
 class ProductReliablePublishingSpec extends EventsourcedAggregateRootSpec[Product](testSystem) with EmbeddedBrokerTestSupport {
 

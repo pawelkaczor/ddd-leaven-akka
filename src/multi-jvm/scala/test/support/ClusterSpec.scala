@@ -6,7 +6,6 @@ import java.io.File
 import akka.actor.{ Identify, Props, ActorIdentity }
 import akka.persistence.journal.leveldb.{ SharedLeveldbStore, SharedLeveldbJournal }
 import akka.persistence.Persistence
-import infrastructure.cluster.ShardingSupport
 import akka.remote.testconductor.RoleName
 import akka.cluster.Cluster
 import org.apache.commons.io.FileUtils
@@ -14,7 +13,7 @@ import scala.reflect.ClassTag
 import scala.concurrent.duration._
 
 abstract class ClusterSpec extends MultiNodeSpec(ClusterConfig)
-  with STMultiNodeSpec with ImplicitSender with ShardingSupport {
+  with STMultiNodeSpec with ImplicitSender {
 
   import ClusterConfig._
 

@@ -19,6 +19,8 @@ trait ActiveMQMessaging {
   activeMQComp.setDeliveryPersistent(false)
   activeMQComp.setRequestTimeout(500)
   //activeMQComp.setAcknowledgementMode(javax.jms.Session.CLIENT_ACKNOWLEDGE)
-  camel.context.addComponent("activemq", activeMQComp)
+  if (camel.context.getComponent("activemq") == null) {
+    camel.context.addComponent("activemq", activeMQComp)
+  }
 
 }

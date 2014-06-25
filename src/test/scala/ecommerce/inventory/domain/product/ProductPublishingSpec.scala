@@ -1,22 +1,22 @@
 package ecommerce.inventory.domain.product
 
-import ecommerce.sales.domain.reservation.Reservation._
+import ecommerce.system.infrastructure.office.Office._
 
-import test.support.{ ReliableLocalPublisher, EventsourcedAggregateRootSpec }
-import ddd.support.domain.Office._
+import test.support.{ LocalOffice, ReliableLocalPublisher, EventsourcedAggregateRootSpec }
 import test.support.TestConfig._
 import akka.actor._
-import infrastructure.actor.PassivationConfig
+import infrastructure.actor.{ CreationSupport, PassivationConfig }
 import ddd.support.domain.AggregateRootActorFactory
 import ecommerce.inventory.domain.Product.{ AddProduct, ProductAdded }
 import ecommerce.sales.sharedkernel.ProductType
 import ecommerce.inventory.domain.Product
 import infrastructure.akka.event.ReliablePublisher
+import LocalOffice._
 
 class ProductPublishingSpec extends EventsourcedAggregateRootSpec[Product](testSystem) {
 
-  def localPublisher(implicit context: ActorContext) = {
-    context.system.actorOf(Props[ReliableLocalPublisher], name = "localEventPublisher")
+  def localPublisher(implicit creator: CreationSupport) = {
+    creator.getOrCreateChild(Props[ReliableLocalPublisher], name = "localEventPublisher")
   }
 
   "New product" should {

@@ -1,26 +1,29 @@
 package ecommerce.integration
 
-import ddd.support.domain.Office._
-import ddd.support.domain.AggregateRootActorFactory
 import akka.actor.Props
-import test.support.{ ClusterConfig, ClusterSpec }
-import ecommerce.sales.sharedkernel.ProductType
-import test.support.broker.EmbeddedBrokerTestSupport
-import ClusterConfig._
-import infrastructure.akka.broker.ActiveMQMessaging
-import test.support.view.{ Daos, ViewsTestSupport }
-import scala.slick.driver.H2Driver
-import ecommerce.inventory.domain.Product.AddProduct
-import ecommerce.inventory.domain.Product
-import infrastructure.actor.PassivationConfig
+import ddd.support.domain.AggregateRootActorFactory
 import ddd.support.domain.protocol.Acknowledged
-import infrastructure.view.ViewDatabase
-import infrastructure.EcommerceSettings
+import ecommerce.inventory.domain.Product
+import ecommerce.inventory.domain.Product.AddProduct
 import ecommerce.inventory.integration.InventoryQueue
-import ecommerce.sales.productcatalog.ProductFinder
-import infrastructure.akka.event.ReliablePublisher
-import ecommerce.system.infrastructure.events.Projection
 import ecommerce.sales.integration.InventoryProjection
+import ecommerce.sales.productcatalog.ProductFinder
+import ecommerce.sales.sharedkernel.ProductType
+import ecommerce.system.infrastructure.events.Projection
+import ecommerce.system.infrastructure.office.Office._
+import infrastructure.EcommerceSettings
+import infrastructure.actor.PassivationConfig
+import infrastructure.akka.broker.ActiveMQMessaging
+import infrastructure.akka.event.ReliablePublisher
+import infrastructure.cluster.ShardingSupport._
+import infrastructure.cluster._
+import infrastructure.view.ViewDatabase
+import test.support.ClusterConfig._
+import test.support.ClusterSpec
+import test.support.broker.EmbeddedBrokerTestSupport
+import test.support.view.{ Daos, ViewsTestSupport }
+
+import scala.slick.driver.H2Driver
 
 class EventsPublishingClusterSpecMultiJvmNode1
   extends EventsPublishingClusterSpec with EmbeddedBrokerTestSupport
@@ -36,26 +39,22 @@ class EventsPublishingClusterSpec extends ClusterSpec with ViewDatabase {
     super.atStartup()
     setupSharedJournal()
     joinCluster()
-    registerGlobalInventoryOffice()
   }
 
-  def registerGlobalInventoryOffice() {
-    val inventoryQueue = system.actorOf(InventoryQueue.props, InventoryQueue.name)
+  val inventoryQueue = system.actorOf(InventoryQueue.props, InventoryQueue.name)
 
-    implicit object ProductActorFactory extends AggregateRootActorFactory[Product] {
-      override def props(passivationConfig: PassivationConfig): Props = {
-        Props(new Product(passivationConfig) with ReliablePublisher {
-          override val target = inventoryQueue.path
-        })
-      }
+  implicit object ProductActorFactory extends AggregateRootActorFactory[Product] {
+    override def props(passivationConfig: PassivationConfig): Props = {
+      Props(new Product(passivationConfig) with ReliablePublisher {
+        override val target = inventoryQueue.path
+      })
     }
-    startSharding[Product]
   }
 
   "ProductAdded events published from any node" should {
     "be delivered to Product Catalog" in {
       on(node1) {
-        val inventoryOffice = globalOffice[Product]
+        val inventoryOffice = office[Product]
         inventoryOffice ! AddProduct("product-1", "product 1", ProductType.Standard)
         expectReply(Acknowledged)
 

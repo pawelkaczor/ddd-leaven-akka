@@ -5,11 +5,14 @@ import akka.persistence._
 import infrastructure.actor.GracefulPassivation
 import ddd.support.domain.error.AggregateRootNotInitializedException
 import AggregateRoot.Event
-import ddd.support.domain.event.{EventMessage, DomainEventMessage, EventHandler, DomainEvent}
+import ddd.support.domain.event.{ EventMessage, DomainEventMessage, EventHandler, DomainEvent }
 import akka.actor.Status.Failure
 import infrastructure.actor.PassivationConfig
 import ddd.support.domain.protocol.Acknowledged
 import ddd.support.domain.command.CommandMessage
+import scala.concurrent.duration._
+
+import scala.concurrent.duration.Duration
 
 object AggregateRoot {
   type Event = DomainEvent
@@ -22,6 +25,7 @@ trait AggregateState {
 
 abstract class AggregateRootActorFactory[T <: AggregateRoot[_]] {
   def props(passivationConfig: PassivationConfig): Props
+  def inactivityTimeout: Duration = 1.minute
 }
 
 trait AggregateRoot[S <: AggregateState]
@@ -63,11 +67,12 @@ trait AggregateRoot[S <: AggregateState]
 
   def raise(event: Event) {
     persist(new EventMessage(event = event, metaData = commandMessage.metaData)) {
-      persisted => {
-        log.info("Event persisted: {}", event)
-        updateState(event)
-        handle(toDomainEventMessage(persisted))
-      }
+      persisted =>
+        {
+          log.info("Event persisted: {}", event)
+          updateState(event)
+          handle(toDomainEventMessage(persisted))
+        }
     }
   }
 

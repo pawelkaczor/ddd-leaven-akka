@@ -1,31 +1,97 @@
 package ecommerce.system.infrastructure.events
 
-import akka.actor.{ ActorLogging, ActorSystem, Props, Actor }
-import akka.camel.{ CamelMessage, Consumer }
+import akka.actor.Status.Failure
+import akka.actor._
+import akka.camel.{ Ack, CamelMessage, Consumer }
 import ddd.support.domain.event.DomainEventMessage
+import ddd.support.domain.protocol.Acknowledged
+import ecommerce.system.infrastructure.events.EventListener.name
+import infrastructure.actor.CreationSupport
 
 object EventListener {
 
-  def apply(endpoint: String)(handler: DomainEventMessage => Unit)(implicit system: ActorSystem) = {
+  def apply(exchangeName: String)(handler: DomainEventMessage => Unit)(implicit creator: CreationSupport): ActorRef = {
+    creator.createChild(props(exchangeName, handler), name(exchangeName))
+  }
 
-    val listenerName = s"${endpoint.split(':').last}Listener"
+  def name(exchangeName: String): String = {
+    s"${exchangeName.split(':').last}Consumer"
+  }
 
-    system.actorOf(Props(new EventListener {
-      override def endpointUri = endpoint
+  def props(exchangeName: String, handler: DomainEventMessage => Unit) = {
+    Props(new EventListener with SyncEventProcessing {
+      override def endpointUri = exchangeName
       override def handle(eventMessage: DomainEventMessage): Unit = handler.apply(eventMessage)
-
-    }), name = listenerName)
+    })
   }
 
 }
 
-abstract class EventListener extends Actor with Consumer with ActorLogging {
+trait EventProcessing extends Consumer with ActorLogging {
+
+  override def autoAck = false
 
   override def receive: Receive = {
     case CamelMessage(em: DomainEventMessage, _) =>
-      handle(em)
+      process(em)
   }
 
-  def handle(eventMessage: DomainEventMessage)
+  def acknowledge(em: DomainEventMessage): Unit = {
+    sender ! Ack
+  }
+
+  def process(em: DomainEventMessage)
 
 }
+
+trait SyncEventProcessing extends EventProcessing {
+
+  def handle(em: DomainEventMessage)
+
+  override def process(em: DomainEventMessage): Unit = {
+    try {
+      handle(em)
+      acknowledge(em)
+    } catch {
+      case ex: Exception =>
+        log.error("Processing of event {} failed. Reason: {}", em, ex.toString)
+        sender ! Failure(ex)
+    }
+  }
+
+}
+
+trait EventForwarding extends EventProcessing {
+
+  def target: ActorRef
+
+  def waitingForAck(em: DomainEventMessage): Actor.Receive = {
+    case Acknowledged(msg) if msg == em =>
+      acknowledge(em)
+      context.unbecome()
+  }
+
+  override def process(em: DomainEventMessage): Unit = {
+    target ! em
+    context.become(waitingForAck(em))
+  }
+
+}
+
+abstract class EventListener {
+  this: EventProcessing =>
+
+}
+
+object ForwardingConsumer {
+  def apply(exchangeName: String, target: ActorRef)(implicit creator: CreationSupport) = {
+    creator.createChild(props(exchangeName, target), name(exchangeName))
+  }
+
+  def props(exchangeName: String, target: ActorRef) = {
+    Props(new ForwardingConsumer(exchangeName, target))
+  }
+
+}
+
+class ForwardingConsumer(override val endpointUri: String, override val target: ActorRef) extends EventListener with EventForwarding

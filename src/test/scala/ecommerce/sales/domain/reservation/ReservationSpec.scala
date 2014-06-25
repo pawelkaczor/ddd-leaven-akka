@@ -1,30 +1,29 @@
 package ecommerce.sales.domain.reservation
 
-import akka.actor.{ Props, ActorRef }
-import ecommerce.sales.domain.reservation.Reservation._
-import ecommerce.sales.domain.reservation.Reservation.ReserveProduct
-import ecommerce.sales.domain.reservation.Reservation.CreateReservation
-import ecommerce.sales.domain.reservation.Reservation.ReservationCreated
-import ecommerce.sales.domain.reservation.Reservation.ProductReserved
-
-import ecommerce.sales.sharedkernel.{ ProductType, Money }
-import test.support.{ LocalPublisher, EventsourcedAggregateRootSpec }
-import ddd.support.domain.Office._
-import test.support.TestConfig._
-import ddd.support.domain.protocol.Acknowledged
+import akka.actor.{ ActorRef, Props }
 import ddd.support.domain.AggregateRootActorFactory
-import infrastructure.actor.PassivationConfig
+import ecommerce.system.infrastructure.office.Office._
+import ddd.support.domain.protocol.Acknowledged
 import ecommerce.sales.domain.product.Product
+import ecommerce.sales.domain.reservation.Reservation._
+import ecommerce.sales.sharedkernel.{ Money, ProductType }
+import infrastructure.actor.PassivationConfig
+import test.support.LocalOffice._
+import test.support.TestConfig._
+import test.support.{ EventsourcedAggregateRootSpec, LocalPublisher }
+import ReservationSpec._
+
+import scala.concurrent.duration._
 
 object ReservationSpec {
-  implicit object ReservationActorFactory extends AggregateRootActorFactory[Reservation] {
+  implicit def reservationActorFactory(implicit _inactivityTimeout: Duration = 1.minute) = new AggregateRootActorFactory[Reservation] {
     override def props(passivationConfig: PassivationConfig): Props = Props(new Reservation(passivationConfig) with LocalPublisher)
-  }
 
+    override def inactivityTimeout: Duration = _inactivityTimeout
+  }
 }
 
 class ReservationSpec extends EventsourcedAggregateRootSpec[Reservation](testSystem) {
-  import ReservationSpec._
 
   var reservationOffice: ActorRef = system.deadLetters
 

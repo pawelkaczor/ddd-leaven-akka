@@ -1,41 +1,31 @@
-package ddd.support.domain
+package test.support
 
 import akka.actor._
-import akka.contrib.pattern.ClusterSharding
-import ddd.support.domain.command.{ Command, CommandMessage }
-import infrastructure.actor.{ ActorContextCreationSupport, Passivate, PassivationConfig }
-
+import ddd.support.domain.command.{ CommandMessage, Command }
+import ddd.support.domain.{ AggregateRootActorFactory, AggregateIdResolution, AggregateRoot }
+import ecommerce.sales.domain.reservation.Reservation
+import ecommerce.system.infrastructure.office.OfficeFactory
+import infrastructure.actor._
 import scala.concurrent.duration._
+import ecommerce.inventory.domain.Product
+import scala.concurrent.duration.Duration
 import scala.reflect.ClassTag
 
-object Office {
+object LocalOffice {
 
-  def office[T <: AggregateRoot[_]](
-    implicit classTag: ClassTag[T],
-    caseIdResolution: AggregateIdResolution[T],
-    clerkFactory: AggregateRootActorFactory[T],
-    system: ActorRefFactory): ActorRef = {
+  implicit object ProductIdResolution extends AggregateIdResolution[Product]
+  implicit object ReservationIdResolution extends AggregateIdResolution[Reservation]
 
-    office[T]()
+  implicit def localOfficeFactory[T <: AggregateRoot[_]](implicit ct: ClassTag[T], creationSupport: CreationSupport): OfficeFactory[T] = {
+    new OfficeFactory[T] {
+      override def getOrCreate(caseIdResolution: AggregateIdResolution[T], clerkFactory: AggregateRootActorFactory[T]): ActorRef = {
+        creationSupport.getOrCreateChild(Props(new LocalOffice[T]()(ct, caseIdResolution, clerkFactory)), officeName(ct))
+      }
+    }
   }
-
-  def office[T <: AggregateRoot[_]](inactivityTimeout: Duration = 1.minute)(
-    implicit classTag: ClassTag[T],
-    caseIdResolution: AggregateIdResolution[T],
-    clerkFactory: AggregateRootActorFactory[T],
-    system: ActorRefFactory): ActorRef = {
-
-    system.actorOf(Props(new Office[T](inactivityTimeout)), officeName(classTag))
-  }
-
-  def globalOffice[T](implicit classTag: ClassTag[T], system: ActorSystem): ActorRef = {
-    ClusterSharding(system).shardRegion(officeName(classTag))
-  }
-
-  def officeName[T](classTag: ClassTag[T]) = classTag.runtimeClass.getSimpleName
 }
 
-class Office[T <: AggregateRoot[_]](inactivityTimeout: Duration = 1.minutes)(
+class LocalOffice[T <: AggregateRoot[_]](inactivityTimeout: Duration = 1.minutes)(
   implicit arClassTag: ClassTag[T],
   caseIdResolution: AggregateIdResolution[T],
   clerkFactory: AggregateRootActorFactory[T])
@@ -54,7 +44,7 @@ class Office[T <: AggregateRoot[_]](inactivityTimeout: Duration = 1.minutes)(
     case Passivate(stopMessage) =>
       dismiss(sender(), stopMessage)
     case cm: CommandMessage =>
-      val clerkProps = clerkFactory.props(PassivationConfig(Passivate(PoisonPill), inactivityTimeout))
+      val clerkProps = clerkFactory.props(PassivationConfig(Passivate(PoisonPill), clerkFactory.inactivityTimeout))
       val clerk = assignClerk(clerkProps, resolveCaseId(cm.command))
       clerk forward cm
   }
@@ -68,4 +58,3 @@ class Office[T <: AggregateRoot[_]](inactivityTimeout: Duration = 1.minutes)(
     clerk ! stopMessage
   }
 }
-

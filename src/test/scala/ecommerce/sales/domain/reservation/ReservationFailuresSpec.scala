@@ -1,17 +1,18 @@
 package ecommerce.sales.domain.reservation
 
-import test.support.EventsourcedAggregateRootSpec
+import test.support.{ LocalOffice, EventsourcedAggregateRootSpec }
 import akka.pattern.ask
 import akka.util.Timeout
 import scala.concurrent.duration._
 import ecommerce.sales.domain.reservation.Reservation.ReserveProduct
 import ddd.support.domain.error.AggregateRootNotInitializedException
-import ddd.support.domain.Office._
+import ecommerce.system.infrastructure.office.Office._
 import test.support.TestConfig._
+import LocalOffice._
 
 class ReservationFailuresSpec extends EventsourcedAggregateRootSpec[Reservation](testSystem) {
 
-  import ReservationSpec.ReservationActorFactory
+  import ReservationSpec._
 
   "Reservation of product" should {
     "fail if Reservation does not exist" in {

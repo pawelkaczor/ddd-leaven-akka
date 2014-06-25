@@ -3,16 +3,17 @@ package ecommerce.sales.domain.reservation
 import akka.actor.Props
 import akka.testkit.TestProbe
 import ddd.support.domain.AggregateRootActorFactory
-import ddd.support.domain.Office._
+import ecommerce.system.infrastructure.office.Office._
 import ddd.support.domain.protocol.Acknowledged
 import ecommerce.sales.domain.reservation.Reservation._
 import infrastructure.actor.PassivationConfig
-import infrastructure.cluster.ReservationShardResolution
+import infrastructure.cluster.{ ShardingSupport, ReservationShardResolution }
 import infrastructure.cluster.ShardResolution.ShardResolutionStrategy
-import test.support.{ ClusterConfig, ClusterSpec, LocalPublisher }
+import test.support.{ ClusterSpec, LocalPublisher }
 
 import scala.concurrent.duration._
 import scala.reflect.ClassTag
+import ShardingSupport._
 
 class ReservationGlobalOfficeSpecMultiJvmNode1 extends ReservationGlobalOfficeSpec
 class ReservationGlobalOfficeSpecMultiJvmNode2 extends ReservationGlobalOfficeSpec
@@ -21,20 +22,16 @@ class ReservationGlobalOfficeSpec extends ClusterSpec {
 
   import test.support.ClusterConfig._
 
-  implicit val reservationActorFactory = new ReservationActorFactory
-
-  class ReservationActorFactory extends AggregateRootActorFactory[Reservation] {
+  implicit object ReservationActorFactory extends AggregateRootActorFactory[Reservation] {
     override def props(passivationConfig: PassivationConfig): Props = Props(new Reservation(passivationConfig) with LocalPublisher)
   }
 
-  def registerGlobalReservationOffice() {
-    startSharding[Reservation](new ReservationShardResolution {
-      //take last char of reservationId as shard id
-      override def shardResolutionStrategy: ShardResolutionStrategy =
-        aggregateIdResolver => {
-          case msg => aggregateIdResolver(msg).last.toString
-        }
-    })
+  implicit object CustomReservationShardResolution extends ReservationShardResolution {
+    //take last char of reservationId as shard id
+    override def shardResolutionStrategy: ShardResolutionStrategy =
+      aggregateIdResolver => {
+        case msg => aggregateIdResolver(msg).last.toString
+      }
   }
 
   "Reservation global office" must {
@@ -42,14 +39,11 @@ class ReservationGlobalOfficeSpec extends ClusterSpec {
       setupSharedJournal()
       joinCluster()
     }
-    "given global reservation office available" in {
-      registerGlobalReservationOffice()
-    }
 
     enterBarrier("when")
 
     "distribute work evenly" in {
-      val reservationOffice = globalOffice[Reservation]
+      val reservationOffice = office[Reservation]
 
       on(node1) {
         expectEventPublished[ReservationCreated] {
@@ -64,7 +58,7 @@ class ReservationGlobalOfficeSpec extends ClusterSpec {
     }
 
     "handle subsequent commands from anywhere" in {
-      val reservationOffice = globalOffice[Reservation]
+      val reservationOffice = office[Reservation]
 
       on(node2) {
         expectReply(Acknowledged) {

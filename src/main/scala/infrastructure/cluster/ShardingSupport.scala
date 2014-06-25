@@ -1,32 +1,53 @@
 package infrastructure.cluster
 
-import scala.reflect.ClassTag
-import akka.actor.{PoisonPill, ActorSystem}
+import akka.actor._
 import akka.contrib.pattern.ClusterSharding
-import scala.Some
 import akka.contrib.pattern.ShardRegion.Passivate
-import scala.concurrent.duration._
-import ddd.support.domain.{AggregateRootActorFactory, AggregateRoot}
+import ddd.support.domain.{ AggregateIdResolution, AggregateRoot, AggregateRootActorFactory }
+import ecommerce.system.infrastructure.office.OfficeFactory
 import infrastructure.actor.PassivationConfig
 
-trait ShardingSupport {
+import scala.reflect.ClassTag
 
-  def startSharding[T <: AggregateRoot[_]](implicit classTag: ClassTag[T], shardResolution: ShardResolution[T],
-                           system: ActorSystem, arActorFactory: AggregateRootActorFactory[T]) {
-    startSharding(shardResolution)
+object ShardingSupport {
+  implicit def globalOfficeFactory[T <: AggregateRoot[_]](implicit ct: ClassTag[T], system: ActorSystem): OfficeFactory[T] = {
+    new OfficeFactory[T] {
+      private def region: Option[ActorRef] = {
+        try {
+          Some(ClusterSharding(system).shardRegion(officeName(ct)))
+        } catch {
+          case ex: IllegalArgumentException => None
+        }
+      }
+      override def getOrCreate(caseIdResolution: AggregateIdResolution[T], clerkFactory: AggregateRootActorFactory[T]): ActorRef = {
+        println(caseIdResolution.getClass)
+        implicit val sr: ShardResolution[T] = caseIdResolution.asInstanceOf[ShardResolution[T]]
+        region.getOrElse {
+          startSharding[T](ct, sr, system, clerkFactory)
+          region.get
+        }
+      }
+    }
   }
 
-  def startSharding[T <: AggregateRoot[_]](shardResolution: ShardResolution[T], inactivityTimeout: Duration = 1.minutes)
-                               (implicit classTag: ClassTag[T], system: ActorSystem, arActorFactory: AggregateRootActorFactory[T]) {
-    val arClass = classTag.runtimeClass.asInstanceOf[Class[T]]
-    val arProps = arActorFactory.props(new PassivationConfig(Passivate(PoisonPill), inactivityTimeout))
+  def startSharding[T <: AggregateRoot[_]](implicit ct: ClassTag[T], sr: ShardResolution[T],
+    system: ActorSystem, arActorFactory: AggregateRootActorFactory[T]) {
+    startSharding(sr)
+  }
+
+  def startSharding[T <: AggregateRoot[_]](sr: ShardResolution[T])(implicit ct: ClassTag[T], system: ActorSystem, arFactory: AggregateRootActorFactory[T]) {
+    val arProps = arFactory.props(new PassivationConfig(Passivate(PoisonPill), arFactory.inactivityTimeout))
+    startSharding[T](sr, arProps)
+  }
+
+  def startSharding[T](sr: ShardResolution[T], entryProps: Props)(implicit ct: ClassTag[T], system: ActorSystem) {
+    val shardedClass = ct.runtimeClass.asInstanceOf[Class[T]]
 
     ClusterSharding(system).start(
-      typeName = arClass.getSimpleName,
-      entryProps = Some(arProps),
-      idExtractor = shardResolution.idExtractor,
-      shardResolver = shardResolution.shardResolver
-    )
+      typeName = shardedClass.getSimpleName,
+      entryProps = Some(entryProps),
+      idExtractor = sr.idExtractor,
+      shardResolver = sr.shardResolver)
   }
 
 }

@@ -3,15 +3,13 @@ package ecommerce.inventory.domain
 import ecommerce.sales.sharedkernel.ProductType
 import ProductType.ProductType
 import ddd.support.domain._
-import ddd.support.domain.event.{EventPublisher, DomainEvent}
+import ddd.support.domain.event.{ EventPublisher, DomainEvent }
 import ecommerce.inventory.domain.errors.InventoryOperationException
 import infrastructure.actor.PassivationConfig
 
 object Product {
 
   def processorId(aggregateId: String) = "Products/" + aggregateId
-
-  implicit val idResolution  = new AggregateIdResolution[Product]
 
   // Commands
   sealed trait Command extends command.Command {
@@ -47,9 +45,9 @@ abstract class Product(override val passivationConfig: PassivationConfig) extend
 
 }
 
-case class ProductState (
-    name: String,
-    productType: ProductType)
+case class ProductState(
+  name: String,
+  productType: ProductType)
   extends AggregateState {
 
   override def apply = {

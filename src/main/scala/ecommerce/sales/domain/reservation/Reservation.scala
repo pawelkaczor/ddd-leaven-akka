@@ -28,8 +28,6 @@ object Reservation {
 
   def processorId(aggregateId: String) = "Reservations/" + aggregateId
 
-  implicit val idResolution = new AggregateIdResolution[Reservation]
-
   // Commands
   sealed trait Command extends command.Command {
     def reservationId: String
@@ -82,10 +80,10 @@ abstract class Reservation(override val passivationConfig: PassivationConfig) ex
 }
 
 case class State(
-    clientId: String,
-    status: ReservationStatus,
-    items: List[ReservationItem],
-    createDate: Date)
+  clientId: String,
+  status: ReservationStatus,
+  items: List[ReservationItem],
+  createDate: Date)
   extends AggregateState {
 
   override def apply = {

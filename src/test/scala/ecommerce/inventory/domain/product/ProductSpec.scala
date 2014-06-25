@@ -1,15 +1,15 @@
 package ecommerce.inventory.domain.product
 
 import akka.actor.{ Props, ActorRef }
-import ecommerce.sales.domain.reservation.Reservation._
-import test.support.{ LocalPublisher, EventsourcedAggregateRootSpec }
-import ddd.support.domain.Office._
+import test.support.{ LocalOffice, LocalPublisher, EventsourcedAggregateRootSpec }
+import ecommerce.system.infrastructure.office.Office._
 import test.support.TestConfig._
 import ecommerce.inventory.domain.Product.{ AddProduct, ProductAdded }
 import ecommerce.sales.sharedkernel.ProductType
 import ddd.support.domain.AggregateRootActorFactory
 import infrastructure.actor.PassivationConfig
 import ecommerce.inventory.domain.Product
+import LocalOffice._
 
 object ProductSpec {
   implicit object ProductActorFactory extends AggregateRootActorFactory[Product] {
