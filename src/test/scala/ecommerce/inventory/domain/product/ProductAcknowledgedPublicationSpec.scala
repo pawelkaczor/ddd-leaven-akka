@@ -34,7 +34,7 @@ class ProductAcknowledgedPublicationSpec extends EventsourcedAggregateRootSpec[P
         }
       }
 
-      Projection(InventoryQueue.EndpointUri, mock[ProjectionSpec])
+      Projection(InventoryQueue.ExchangeName, mock[ProjectionSpec])
 
       // when
       import DeliveryContext.Adjust._

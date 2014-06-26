@@ -10,8 +10,8 @@ import infrastructure.actor.CreationSupport
 
 object EventListener {
 
-  def apply(exchangeName: String)(handler: DomainEventMessage => Unit)(implicit creator: CreationSupport): ActorRef = {
-    creator.createChild(props(exchangeName, handler), name(exchangeName))
+  def apply(exchangeName: String)(handler: DomainEventMessage => Unit)(implicit parent: CreationSupport): ActorRef = {
+    parent.createChild(props(exchangeName, handler), name(exchangeName))
   }
 
   def name(exchangeName: String): String = {

@@ -3,6 +3,7 @@ package test.support
 import akka.actor._
 import akka.testkit.{ TestProbe, EventFilter, ImplicitSender, TestKit }
 import akka.util.Timeout
+import infrastructure.actor.CreationSupport
 import org.scalatest.{ BeforeAndAfter, BeforeAndAfterAll, Matchers, WordSpecLike }
 import scala.concurrent.{ Future, Await }
 import scala.concurrent.duration._
@@ -23,6 +24,15 @@ abstract class EventsourcedAggregateRootSpec[T](_system: ActorSystem)(implicit a
   val domain = arClassTag.runtimeClass.getSimpleName
 
   implicit val logger = new RainbowLogger(suiteName)
+
+  implicit def topLevelParent(implicit system: ActorSystem): CreationSupport = {
+    new CreationSupport {
+      override def getChild(name: String): Option[ActorRef] = None
+      override def createChild(props: Props, name: String): ActorRef = {
+        system.actorOf(props, name)
+      }
+    }
+  }
 
   override def afterAll() {
     TestKit.shutdownActorSystem(system)

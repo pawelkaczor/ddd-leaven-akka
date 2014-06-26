@@ -5,7 +5,7 @@ import akka.actor.Props
 import akka.camel.Oneway
 
 object InventoryQueue {
-  val EndpointUri = "activemq:queue:Inventory"
+  val ExchangeName = "activemq:queue:Inventory"
 
   val name = "inventoryQueue"
 
@@ -14,5 +14,5 @@ object InventoryQueue {
 }
 
 class InventoryQueue extends EventMessageConfirmableProducer {
-  override def endpointUri = InventoryQueue.EndpointUri
+  override def endpointUri = InventoryQueue.ExchangeName
 }

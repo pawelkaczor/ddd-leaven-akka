@@ -1,14 +1,14 @@
 package ecommerce.system.infrastructure.events
 
-import akka.actor.{ ActorRef, ActorSystem, Props }
+import akka.actor.{ ActorRef, Props }
 import ddd.support.domain.event.DomainEventMessage
 import ddd.support.domain.protocol.ViewUpdated
 import infrastructure.actor.CreationSupport
 
 object Projection {
 
-  def apply(exchangeName: String, spec: ProjectionSpec)(implicit creator: CreationSupport): ActorRef = {
-    creator.createChild(props(exchangeName, spec), name(exchangeName))
+  def apply(exchangeName: String, spec: ProjectionSpec)(implicit parent: CreationSupport): ActorRef = {
+    parent.createChild(props(exchangeName, spec), name(exchangeName))
   }
 
   def props(exchangeName: String, spec: ProjectionSpec): Props = {

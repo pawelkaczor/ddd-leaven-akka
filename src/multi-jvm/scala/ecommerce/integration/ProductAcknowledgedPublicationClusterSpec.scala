@@ -35,14 +35,8 @@ class ProductAcknowledgedPublicationClusterSpecMultiJvmNode2
 class ProductAcknowledgedPublicationClusterSpec extends ClusterSpec with ViewDatabase {
 
   override val settings = EcommerceSettings(system)
-
-  override protected def atStartup() {
-    super.atStartup()
-    setupSharedJournal()
-    joinCluster()
-  }
-
-  val inventoryQueue = system.actorOf(InventoryQueue.props, InventoryQueue.name)
+  lazy val daos = new Daos(H2Driver)
+  lazy val inventoryQueue = system.actorOf(InventoryQueue.props, InventoryQueue.name)
 
   implicit object ProductActorFactory extends AggregateRootActorFactory[Product] {
     override def props(config: PassivationConfig): Props = {
@@ -52,15 +46,23 @@ class ProductAcknowledgedPublicationClusterSpec extends ClusterSpec with ViewDat
     }
   }
 
+  override protected def atStartup() {
+    super.atStartup()
+    setupSharedJournal()
+    joinCluster()
+    // start shard region for Product on each node
+    office[Product]
+  }
+
   "Newly published product" should {
     "be findable as soon as publication is acknowledged" in {
-      on(node1) {
-        // given
-        val inventoryOffice = office[Product]
 
+      Projection(InventoryQueue.ExchangeName, new InventoryProjection(viewDb, daos))
+
+      on(node1) {
         // when
         import DeliveryContext.Adjust._
-        inventoryOffice ! AddProduct("product-1", "product 1", Standard).requestDLR[ViewUpdated]
+        office[Product] ! AddProduct("product-1", "product 1", Standard).requestDLR[ViewUpdated]
 
         // then
         expectReply(Acknowledged)
@@ -70,11 +72,8 @@ class ProductAcknowledgedPublicationClusterSpec extends ClusterSpec with ViewDat
       }
 
       on(node2) {
-        val daos = new Daos(H2Driver)
-        Projection(InventoryQueue.EndpointUri, new InventoryProjection(viewDb, daos))
         val productFinder = system.actorOf(ProductFinder.props(viewDb, daos), ProductFinder.name)
 
-        // given
         enterBarrier("publication acknowledged")
 
         // when (immediate query possible as publication in product catalog has been already acknowledged)
