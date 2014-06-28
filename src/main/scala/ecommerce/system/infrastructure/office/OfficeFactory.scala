@@ -1,11 +1,11 @@
 package ecommerce.system.infrastructure.office
 
 import akka.actor.ActorRef
-import ddd.support.domain.{AggregateRootActorFactory, AggregateIdResolution, AggregateRoot}
+import ddd.support.domain._
 
 import scala.reflect.ClassTag
 
-trait OfficeFactory[T <: AggregateRoot[_]] {
-  def getOrCreate(caseIdResolution: AggregateIdResolution[T], clerkFactory: AggregateRootActorFactory[T]): ActorRef
-  def officeName(classTag: ClassTag[T]) = classTag.runtimeClass.getSimpleName
+trait OfficeFactory[A <: BusinessEntity] {
+  def getOrCreate(caseIdResolution: IdResolution[A], clerkFactory: BusinessEntityActorFactory[A]): ActorRef
+  def officeName(classTag: ClassTag[A]) = classTag.runtimeClass.getSimpleName
 }

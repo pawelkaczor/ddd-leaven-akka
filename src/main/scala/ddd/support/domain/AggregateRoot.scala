@@ -23,20 +23,21 @@ trait AggregateState {
   def apply: StateMachine
 }
 
-abstract class AggregateRootActorFactory[T <: AggregateRoot[_]] {
+abstract class AggregateRootActorFactory[A <: AggregateRoot[_]] extends BusinessEntityActorFactory[A] {
   def props(passivationConfig: PassivationConfig): Props
   def inactivityTimeout: Duration = 1.minute
 }
 
 trait AggregateRoot[S <: AggregateState]
-  extends GracefulPassivation with EventsourcedProcessor with EventHandler with ActorLogging {
+  extends BusinessEntity with GracefulPassivation with EventsourcedProcessor with EventHandler with ActorLogging {
 
   type AggregateRootFactory = PartialFunction[Event, S]
   private var stateOpt: Option[S] = None
   private var _lastCommandMessage: Option[CommandMessage] = None
   val factory: AggregateRootFactory
 
-  override def processorId: String = aggregateId
+  override def processorId: String = id
+  override def id = self.path.name
 
   override def receiveCommand: Receive = {
     case cm: CommandMessage =>
@@ -55,8 +56,6 @@ trait AggregateRoot[S <: AggregateState]
   }
 
   def commandMessage = _lastCommandMessage.get
-
-  def aggregateId = self.path.name
 
   def handleCommand: Receive
 
@@ -77,7 +76,7 @@ trait AggregateRoot[S <: AggregateState]
   }
 
   def toDomainEventMessage(persisted: EventMessage) =
-    new DomainEventMessage(persisted, SnapshotId(aggregateId, lastSequenceNr))
+    new DomainEventMessage(persisted, SnapshotId(id, lastSequenceNr))
 
   override def handle(event: DomainEventMessage) {
     sender ! Acknowledged

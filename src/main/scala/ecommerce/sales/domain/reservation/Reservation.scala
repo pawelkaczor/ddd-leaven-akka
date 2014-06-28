@@ -48,7 +48,7 @@ object Reservation {
 abstract class Reservation(override val passivationConfig: PassivationConfig) extends AggregateRoot[State] {
   this: EventPublisher =>
 
-  override def processorId = Reservation.processorId(aggregateId)
+  override def processorId = Reservation.processorId(id)
 
   override val factory: AggregateRootFactory = {
     case ReservationCreated(_, clientId) =>

@@ -2,7 +2,7 @@ package test.support
 
 import akka.actor._
 import ddd.support.domain.command.{ CommandMessage, Command }
-import ddd.support.domain.{ AggregateRootActorFactory, AggregateIdResolution, AggregateRoot }
+import ddd.support.domain._
 import ecommerce.sales.domain.reservation.Reservation
 import ecommerce.system.infrastructure.office.OfficeFactory
 import infrastructure.actor._
@@ -16,19 +16,19 @@ object LocalOffice {
   implicit object ProductIdResolution extends AggregateIdResolution[Product]
   implicit object ReservationIdResolution extends AggregateIdResolution[Reservation]
 
-  implicit def localOfficeFactory[T <: AggregateRoot[_]](implicit ct: ClassTag[T], creationSupport: CreationSupport): OfficeFactory[T] = {
-    new OfficeFactory[T] {
-      override def getOrCreate(caseIdResolution: AggregateIdResolution[T], clerkFactory: AggregateRootActorFactory[T]): ActorRef = {
-        creationSupport.getOrCreateChild(Props(new LocalOffice[T]()(ct, caseIdResolution, clerkFactory)), officeName(ct))
+  implicit def localOfficeFactory[A <: BusinessEntity](implicit ct: ClassTag[A], creationSupport: CreationSupport): OfficeFactory[A] = {
+    new OfficeFactory[A] {
+      override def getOrCreate(caseIdResolution: IdResolution[A], clerkFactory: BusinessEntityActorFactory[A]): ActorRef = {
+        creationSupport.getOrCreateChild(Props(new LocalOffice[A]()(ct, caseIdResolution, clerkFactory)), officeName(ct))
       }
     }
   }
 }
 
-class LocalOffice[T <: AggregateRoot[_]](inactivityTimeout: Duration = 1.minutes)(
-  implicit arClassTag: ClassTag[T],
-  caseIdResolution: AggregateIdResolution[T],
-  clerkFactory: AggregateRootActorFactory[T])
+class LocalOffice[A <: BusinessEntity](inactivityTimeout: Duration = 1.minutes)(
+  implicit ct: ClassTag[A],
+  caseIdResolution: IdResolution[A],
+  clerkFactory: BusinessEntityActorFactory[A])
   extends ActorContextCreationSupport with Actor with ActorLogging {
 
   override def aroundReceive(receive: Actor.Receive, msg: Any): Unit = {
@@ -49,7 +49,7 @@ class LocalOffice[T <: AggregateRoot[_]](inactivityTimeout: Duration = 1.minutes
       clerk forward cm
   }
 
-  def resolveCaseId(msg: Command) = caseIdResolution.aggregateIdResolver(msg)
+  def resolveCaseId(msg: Command) = caseIdResolution.entityIdResolver(msg)
 
   def assignClerk(caseProps: Props, caseId: String): ActorRef = getOrCreateChild(caseProps, caseId)
 

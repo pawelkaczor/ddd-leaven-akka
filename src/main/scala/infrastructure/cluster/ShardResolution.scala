@@ -1,31 +1,32 @@
 package infrastructure.cluster
 
 import akka.contrib.pattern.ShardRegion._
-import ddd.support.domain.AggregateIdResolution.AggregateIdResolver
-import ddd.support.domain.AggregateIdResolution
-import ShardResolution._
-import ddd.support.domain.command.{CommandMessage, Command}
+import ddd.support.domain.{EntityMessage, IdResolution}
+import ddd.support.domain.IdResolution.EntityIdResolver
+import ddd.support.domain.command.{ Command, CommandMessage }
+import infrastructure.cluster.ShardResolution._
 
 object ShardResolution {
 
-  type ShardResolutionStrategy = AggregateIdResolver => ShardResolver
+  type ShardResolutionStrategy = EntityIdResolver => ShardResolver
 
   val defaultShardResolutionStrategy: ShardResolutionStrategy = {
-    aggregateIdResolver => {
-      case msg  => Integer.toHexString(aggregateIdResolver(msg).hashCode).charAt(0).toString
-    }
+    entityIdResolver =>
+      {
+        case msg => Integer.toHexString(entityIdResolver(msg).hashCode).charAt(0).toString
+      }
   }
 }
 
-trait ShardResolution[T] extends AggregateIdResolution[T] {
+trait ShardResolution[A] extends IdResolution[A] {
 
   def shardResolutionStrategy = defaultShardResolutionStrategy
 
-  val shardResolver: ShardResolver = shardResolutionStrategy(aggregateIdResolver)
+  val shardResolver: ShardResolver = shardResolutionStrategy(entityIdResolver)
 
   val idExtractor: IdExtractor = {
-    case cm: CommandMessage => (aggregateIdResolver(cm), cm)
-    case c: Command => (aggregateIdResolver(c), CommandMessage(c))
+    case em: EntityMessage => (entityIdResolver(em), em)
+    case c: Command => (entityIdResolver(c), CommandMessage(c))
   }
 
 }
