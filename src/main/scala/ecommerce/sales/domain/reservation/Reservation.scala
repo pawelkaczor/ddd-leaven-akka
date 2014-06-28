@@ -6,16 +6,11 @@ import ecommerce.sales.sharedkernel.{ ProductType, Money }
 import ddd.support.domain._
 import ddd.support.domain.event.{ EventPublisher, DomainEvent }
 import ecommerce.sales.domain.product.Product
-import ecommerce.sales.domain.reservation.Reservation.ProductReserved
+import ecommerce.sales.domain.reservation.Reservation._
 import ecommerce.sales.domain.reservation.errors.ReservationCreationException
-import ecommerce.sales.domain.reservation.Reservation.CreateReservation
 import ddd.support.domain.SnapshotId
 import scala.Some
 import ecommerce.sales.domain.reservation.errors.ReservationOperationException
-import ecommerce.sales.domain.reservation.Reservation.CloseReservation
-import ecommerce.sales.domain.reservation.Reservation.ReserveProduct
-import ecommerce.sales.domain.reservation.Reservation.ReservationCreated
-import ecommerce.sales.domain.reservation.Reservation.ReservationClosed
 import infrastructure.actor.PassivationConfig
 
 /**
@@ -42,6 +37,30 @@ object Reservation {
   case class ReservationCreated(reservationId: String, clientId: String) extends DomainEvent
   case class ProductReserved(reservationId: String, product: Product, quantity: Int) extends DomainEvent
   case class ReservationClosed(reservationId: String) extends DomainEvent
+
+  case class State(
+      clientId: String,
+      status: ReservationStatus,
+      items: List[ReservationItem],
+      createDate: Date)
+    extends AggregateState {
+
+    override def apply = {
+
+      case ProductReserved(_, product, quantity) =>
+        val newItems = items.find(item => item.productId == product.productId) match {
+          case Some(orderLine) =>
+            val index = items.indexOf(orderLine)
+            items.updated(index, orderLine.increaseQuantity(quantity))
+          case None =>
+            ReservationItem(product, quantity) :: items
+        }
+        copy(items = newItems)
+
+      case ReservationClosed(_) => copy(status = Closed)
+    }
+
+  }
 
 }
 
@@ -75,30 +94,6 @@ abstract class Reservation(override val passivationConfig: PassivationConfig) ex
 
     case CloseReservation(reservationId) =>
       raise(ReservationClosed(reservationId))
-  }
-
-}
-
-case class State(
-  clientId: String,
-  status: ReservationStatus,
-  items: List[ReservationItem],
-  createDate: Date)
-  extends AggregateState {
-
-  override def apply = {
-
-    case ProductReserved(_, product, quantity) =>
-      val newItems = items.find(item => item.productId == product.productId) match {
-        case Some(orderLine) =>
-          val index = items.indexOf(orderLine)
-          items.updated(index, orderLine.increaseQuantity(quantity))
-        case None =>
-          ReservationItem(product, quantity) :: items
-      }
-      copy(items = newItems)
-
-    case ReservationClosed(_) => copy(status = Closed)
   }
 
 }
