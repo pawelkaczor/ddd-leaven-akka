@@ -14,7 +14,7 @@ import akka.actor.Terminated
 import infrastructure.EcommerceSettings
 import org.scalatest.mock.MockitoSugar
 
-abstract class EventsourcedAggregateRootSpec[T](_system: ActorSystem)(implicit arClassTag: ClassTag[T])
+abstract class EventsourcedAggregateRootSpec[A](_system: ActorSystem)(implicit arClassTag: ClassTag[A])
   extends TestKit(_system)
   with ImplicitSender
   with WordSpecLike with MockitoSugar with Matchers
@@ -45,15 +45,15 @@ abstract class EventsourcedAggregateRootSpec[T](_system: ActorSystem)(implicit a
     probe.expectMsgClass(10 seconds, t.runtimeClass)
   }
 
-  def expectEventPersisted[E](aggregateId: String)(when: => Unit)(implicit t: ClassTag[E], idResolution: AggregateIdResolution[T]) {
+  def expectEventPersisted[E](aggregateId: String)(when: => Unit)(implicit t: ClassTag[E], idResolution: AggregateIdResolution[A] = new AggregateIdResolution[A]) {
     expectLogMessageFromAR("Event persisted: " + t.runtimeClass.getSimpleName, when)(aggregateId)
   }
 
-  def expectEventPersisted[E](event: E)(aggregateRootId: String)(when: => Unit)(implicit idResolution: AggregateIdResolution[T]) {
+  def expectEventPersisted[E](event: E)(aggregateRootId: String)(when: => Unit)(implicit idResolution: AggregateIdResolution[A] = new AggregateIdResolution[A]) {
     expectLogMessageFromAR("Event persisted: " + event.toString, when)(aggregateRootId)
   }
 
-  def expectLogMessageFromAR(messageStart: String, when: => Unit)(aggregateId: String)(implicit idResolution: AggregateIdResolution[T]) {
+  def expectLogMessageFromAR(messageStart: String, when: => Unit)(aggregateId: String)(implicit idResolution: AggregateIdResolution[A] = new AggregateIdResolution[A]) {
     EventFilter.info(
       source = s"akka://Tests/user/$domain/$aggregateId",
       start = messageStart, occurrences = 1)
@@ -68,7 +68,7 @@ abstract class EventsourcedAggregateRootSpec[T](_system: ActorSystem)(implicit a
     }
   }
 
-  def expectLogMessageFromOffice(messageStart: String)(when: => Unit)(implicit idResolution: AggregateIdResolution[T]) {
+  def expectLogMessageFromOffice(messageStart: String)(when: => Unit)(implicit idResolution: AggregateIdResolution[A] = new AggregateIdResolution[A]) {
     EventFilter.info(
       source = s"akka://Tests/user/$domain",
       start = messageStart, occurrences = 1)

@@ -1,7 +1,7 @@
 package infrastructure.cluster
 
 import akka.contrib.pattern.ShardRegion._
-import ddd.support.domain.{EntityMessage, IdResolution}
+import ddd.support.domain.{ EntityMessage, IdResolution }
 import ddd.support.domain.IdResolution.EntityIdResolver
 import ddd.support.domain.command.{ Command, CommandMessage }
 import infrastructure.cluster.ShardResolution._

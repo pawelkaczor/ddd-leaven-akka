@@ -1,20 +1,15 @@
 package test.support
 
 import akka.actor._
-import ddd.support.domain.command.{ CommandMessage, Command }
 import ddd.support.domain._
-import ecommerce.sales.domain.reservation.Reservation
+import ddd.support.domain.command.{ Command, CommandMessage }
 import ecommerce.system.infrastructure.office.OfficeFactory
 import infrastructure.actor._
+
 import scala.concurrent.duration._
-import ecommerce.inventory.domain.Product
-import scala.concurrent.duration.Duration
 import scala.reflect.ClassTag
 
 object LocalOffice {
-
-  implicit object ProductIdResolution extends AggregateIdResolution[Product]
-  implicit object ReservationIdResolution extends AggregateIdResolution[Reservation]
 
   implicit def localOfficeFactory[A <: BusinessEntity](implicit ct: ClassTag[A], creationSupport: CreationSupport): OfficeFactory[A] = {
     new OfficeFactory[A] {

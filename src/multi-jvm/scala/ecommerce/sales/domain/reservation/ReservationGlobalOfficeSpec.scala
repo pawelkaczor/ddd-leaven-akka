@@ -7,10 +7,10 @@ import ecommerce.system.infrastructure.office.Office._
 import ddd.support.domain.protocol.Acknowledged
 import ecommerce.sales.domain.reservation.Reservation._
 import infrastructure.actor.PassivationConfig
-import infrastructure.cluster.{ ShardingSupport, ReservationShardResolution }
+import infrastructure.cluster
 import infrastructure.cluster.ShardResolution.ShardResolutionStrategy
 import test.support.{ ClusterSpec, LocalPublisher }
-
+import cluster._
 import scala.concurrent.duration._
 import scala.reflect.ClassTag
 import ShardingSupport._
@@ -26,7 +26,7 @@ class ReservationGlobalOfficeSpec extends ClusterSpec {
     override def props(passivationConfig: PassivationConfig): Props = Props(new Reservation(passivationConfig) with LocalPublisher)
   }
 
-  implicit object CustomReservationShardResolution extends ReservationShardResolution {
+  implicit object CustomReservationShardResolution extends DefaultShardResolution[Reservation] {
     //take last char of reservationId as shard id
     override def shardResolutionStrategy: ShardResolutionStrategy =
       aggregateIdResolver => {

@@ -1,21 +1,14 @@
 package infrastructure
 
-import _root_.akka.actor.{ PoisonPill, Props, ActorRef, ActorSystem }
+import _root_.akka.actor.{ ActorRef, ActorSystem, PoisonPill, Props }
 import _root_.akka.contrib.pattern.ClusterSingletonManager
-import ecommerce.sales.domain.reservation.Reservation
-import ecommerce.inventory.domain.Product
 import ddd.support.domain.AggregateIdResolution
 import infrastructure.actor.CreationSupport
 
 package object cluster {
 
-  // Reservation
-  implicit val reservationShardResolution = new ReservationShardResolution
-  class ReservationShardResolution extends AggregateIdResolution[Reservation] with ShardResolution[Reservation]
-
-  // Product
-  implicit val productShardResolution = new ProductShardResolution
-  class ProductShardResolution extends AggregateIdResolution[Product] with ShardResolution[Product]
+  implicit def defaultShardResolution[A] = new DefaultShardResolution[A]
+  class DefaultShardResolution[A] extends AggregateIdResolution[A] with ShardResolution[A]
 
   implicit def singletonManagerFactory(implicit system: ActorSystem): CreationSupport = {
     new CreationSupport {
