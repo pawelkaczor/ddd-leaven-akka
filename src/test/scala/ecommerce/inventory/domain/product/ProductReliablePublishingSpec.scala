@@ -13,7 +13,7 @@ import test.support.{ LocalOffice, EventsourcedAggregateRootSpec }
 import test.support.TestConfig._
 import test.support.broker.EmbeddedBrokerTestSupport
 import LocalOffice._
-import ecommerce.system.infrastructure.events.EventListener
+import ecommerce.system.infrastructure.events.EventConsumer
 
 class ProductReliablePublishingSpec extends EventsourcedAggregateRootSpec[Product](testSystem) with EmbeddedBrokerTestSupport {
 
@@ -30,7 +30,7 @@ class ProductReliablePublishingSpec extends EventsourcedAggregateRootSpec[Produc
         }
       }
 
-      EventListener(InventoryQueue.ExchangeName) {
+      EventConsumer(InventoryQueue.ExchangeName) {
         eventMessage => system.eventStream.publish(eventMessage.event)
       }
 

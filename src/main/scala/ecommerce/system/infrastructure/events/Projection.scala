@@ -22,7 +22,7 @@ object Projection {
   }
 }
 
-abstract class Projection(spec: ProjectionSpec) extends EventListener with SyncEventProcessing {
+abstract class Projection(spec: ProjectionSpec) extends EventConsumer with SyncEventProcessing {
 
   override def handle(em: DomainEventMessage) {
     spec.apply(em)
