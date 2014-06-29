@@ -1,3 +1,5 @@
 package ddd.support.domain
 
-case class SnapshotId(aggregateId: String, sequenceNr: Long = 0)
+import ddd.support.domain.BusinessEntity.EntityId
+
+case class SnapshotId(aggregateId: EntityId, sequenceNr: Long = 0)

@@ -38,13 +38,13 @@ class LocalOffice[A <: BusinessEntity](inactivityTimeout: Duration = 1.minutes)(
     // for the clerk being passivated, when receiving Terminated it should flush the buffer
     case Passivate(stopMessage) =>
       dismiss(sender(), stopMessage)
-    case cm: CommandMessage =>
+    case msg: EntityMessage =>
       val clerkProps = clerkFactory.props(PassivationConfig(Passivate(PoisonPill), clerkFactory.inactivityTimeout))
-      val clerk = assignClerk(clerkProps, resolveCaseId(cm.command))
-      clerk forward cm
+      val clerk = assignClerk(clerkProps, resolveCaseId(msg))
+      clerk forward msg
   }
 
-  def resolveCaseId(msg: Command) = caseIdResolution.entityIdResolver(msg)
+  def resolveCaseId(msg: Any) = caseIdResolution.entityIdResolver(msg)
 
   def assignClerk(caseProps: Props, caseId: String): ActorRef = getOrCreateChild(caseProps, caseId)
 

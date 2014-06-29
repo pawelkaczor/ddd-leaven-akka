@@ -1,16 +1,15 @@
 package ecommerce.sales.domain.reservation
 
-import ReservationStatus._
 import java.util.Date
-import ecommerce.sales.sharedkernel.{ ProductType, Money }
+
+import ddd.support.domain.BusinessEntity.EntityId
 import ddd.support.domain._
-import ddd.support.domain.event.{ EventPublisher, DomainEvent }
+import ddd.support.domain.event.{ DomainEvent, EventPublisher }
 import ecommerce.sales.domain.product.Product
 import ecommerce.sales.domain.reservation.Reservation._
-import ecommerce.sales.domain.reservation.errors.ReservationCreationException
-import ddd.support.domain.SnapshotId
-import scala.Some
-import ecommerce.sales.domain.reservation.errors.ReservationOperationException
+import ecommerce.sales.domain.reservation.ReservationStatus._
+import ecommerce.sales.domain.reservation.errors.{ ReservationCreationException, ReservationOperationException }
+import ecommerce.sales.sharedkernel.{ Money, ProductType }
 import infrastructure.actor.PassivationConfig
 
 /**
@@ -21,28 +20,30 @@ import infrastructure.actor.PassivationConfig
  */
 object Reservation {
 
-  def processorId(aggregateId: String) = "Reservations/" + aggregateId
+  def processorId(aggregateId: EntityId) = "Reservations/" + aggregateId
 
   // Commands
   sealed trait Command extends command.Command {
-    def reservationId: String
+    def reservationId: EntityId
     override def aggregateId = reservationId
   }
 
-  case class CreateReservation(reservationId: String, clientId: String) extends Command
-  case class ReserveProduct(reservationId: String, productId: String, quantity: Int) extends Command
-  case class CloseReservation(reservationId: String) extends Command
+  case class CreateReservation(reservationId: EntityId, clientId: EntityId) extends Command
+  case class ReserveProduct(reservationId: EntityId, productId: EntityId, quantity: Int) extends Command
+  case class ConfirmReservation(reservationId: EntityId) extends Command
+  case class CloseReservation(reservationId: EntityId) extends Command
 
   // Events
-  case class ReservationCreated(reservationId: String, clientId: String) extends DomainEvent
-  case class ProductReserved(reservationId: String, product: Product, quantity: Int) extends DomainEvent
-  case class ReservationClosed(reservationId: String) extends DomainEvent
+  case class ReservationCreated(reservationId: EntityId, clientId: EntityId) extends DomainEvent
+  case class ProductReserved(reservationId: EntityId, product: Product, quantity: Int) extends DomainEvent
+  case class ReservationConfirmed(reservationId: EntityId, clientId: EntityId) extends DomainEvent
+  case class ReservationClosed(reservationId: EntityId) extends DomainEvent
 
   case class State(
-      clientId: String,
-      status: ReservationStatus,
-      items: List[ReservationItem],
-      createDate: Date)
+    clientId: EntityId,
+    status: ReservationStatus,
+    items: List[ReservationItem],
+    createDate: Date)
     extends AggregateState {
 
     override def apply = {
@@ -57,6 +58,7 @@ object Reservation {
         }
         copy(items = newItems)
 
+      case ReservationConfirmed(_, _) => copy(status = Confirmed)
       case ReservationClosed(_) => copy(status = Closed)
     }
 
@@ -90,6 +92,13 @@ abstract class Reservation(override val passivationConfig: PassivationConfig) ex
         // TODO fetch price for the client
         val product = Product(SnapshotId(productId, 0), "productName", ProductType.Standard, Some(Money(10)))
         raise(ProductReserved(reservationId, product, quantity))
+      }
+
+    case ConfirmReservation(reservationId) =>
+      if (state.status eq Closed) {
+        throw new ReservationOperationException(s"Reservation $reservationId is closed", reservationId)
+      } else {
+        raise(ReservationConfirmed(reservationId, state.clientId))
       }
 
     case CloseReservation(reservationId) =>

@@ -21,4 +21,6 @@ case class DomainEventMessage(
 
   def sequenceNr = snapshotId.sequenceNr
 
+  override def payload: Any = event
+
 }

@@ -28,8 +28,8 @@ abstract class Projection(spec: ProjectionSpec) extends EventConsumer with SyncE
     spec.apply(em)
   }
 
-  override def acknowledge(em: DomainEventMessage): Unit = {
-    super.acknowledge(em)
+  override def acknowledge(sender: ActorRef, em: DomainEventMessage): Unit = {
+    super.acknowledge(sender, em)
 
     implicit def system = context.system
     import ecommerce.system.DeliveryContext._

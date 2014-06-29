@@ -15,7 +15,7 @@ trait EventProcessing extends Consumer with ActorLogging {
       process(em)
   }
 
-  def acknowledge(em: DomainEventMessage): Unit = {
+  def acknowledge(sender: ActorRef, em: DomainEventMessage): Unit = {
     sender ! Ack
   }
 
@@ -30,7 +30,7 @@ trait SyncEventProcessing extends EventProcessing {
   override def process(em: DomainEventMessage): Unit = {
     try {
       handle(em)
-      acknowledge(em)
+      acknowledge(sender(), em)
     } catch {
       case ex: Exception =>
         log.error("Processing of event {} failed. Reason: {}", em, ex.toString)
@@ -44,15 +44,15 @@ trait EventForwarding extends EventProcessing {
 
   def target: ActorRef
 
-  def waitingForAck(em: DomainEventMessage): Actor.Receive = {
+  def waitingForAck(sender: ActorRef, em: DomainEventMessage): Actor.Receive = {
     case Acknowledged(msg) if msg == em =>
-      acknowledge(em)
+      acknowledge(sender, em)
       context.unbecome()
   }
 
   override def process(em: DomainEventMessage): Unit = {
     target ! em
-    context.become(waitingForAck(em))
+    context.become(waitingForAck(sender(), em))
   }
 
 }

@@ -11,7 +11,9 @@ case class CommandMessage(
     identifier: String = UUID.randomUUID().toString,
     timestamp: Date = new Date,
     metaData: MetaData = Map.empty)
-    extends Message(metaData) with EntityMessage {
+  extends Message(metaData) with EntityMessage {
 
   override def entityId: EntityId = command.aggregateId
+
+  override def payload: Any = command
 }
