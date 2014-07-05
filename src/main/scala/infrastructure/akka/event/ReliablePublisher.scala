@@ -4,12 +4,12 @@ import akka.actor._
 import akka.persistence._
 import ddd.support.domain.AggregateRoot
 import scala.concurrent.duration._
-import ddd.support.domain.event.{EventMessage, EventPublisher, DomainEventMessage}
+import ddd.support.domain.event.{ EventMessage, EventPublisher, DomainEventMessage }
 import akka.persistence.RedeliverFailure
 import scala.Some
 import akka.actor.SupervisorStrategy.Escalate
 
-trait ReliablePublisher extends EventsourcedProcessor with EventPublisher {
+trait ReliablePublisher extends PersistentActor with EventPublisher {
   this: AggregateRoot[_] =>
 
   implicit def system = context.system
@@ -64,7 +64,7 @@ trait ReliablePublisher extends EventsourcedProcessor with EventPublisher {
         // deleteMessage(message.get.asInstanceOf[Persistent].sequenceNr, permanent = false)
 
         // omit AggregateRoot#preRestart
-        super[EventsourcedProcessor].preRestart(reason, message)
+        super[PersistentActor].preRestart(reason, message)
       case _ =>
         super.preRestart(reason, message)
     }

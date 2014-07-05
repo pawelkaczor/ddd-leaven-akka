@@ -9,7 +9,7 @@ import infrastructure.actor.PassivationConfig
 
 object Product {
 
-  def processorId(aggregateId: String) = "Products/" + aggregateId
+  def persistenceId(aggregateId: String) = "Products/" + aggregateId
 
   // Commands
   sealed trait Command extends command.Command {
@@ -27,7 +27,7 @@ import Product._
 abstract class Product(override val passivationConfig: PassivationConfig) extends AggregateRoot[ProductState] {
   this: EventPublisher =>
 
-  override def processorId = Product.processorId(id)
+  override def persistenceId = Product.persistenceId(id)
 
   override val factory: AggregateRootFactory = {
     case ProductAdded(name, productType) =>

@@ -20,7 +20,7 @@ import infrastructure.actor.PassivationConfig
  */
 object Reservation {
 
-  def processorId(aggregateId: EntityId) = "Reservations/" + aggregateId
+  def persistenceId(aggregateId: EntityId) = "Reservations/" + aggregateId
 
   // Commands
   sealed trait Command extends command.Command {
@@ -69,7 +69,7 @@ object Reservation {
 abstract class Reservation(override val passivationConfig: PassivationConfig) extends AggregateRoot[State] {
   this: EventPublisher =>
 
-  override def processorId = Reservation.processorId(id)
+  override def persistenceId = Reservation.persistenceId(id)
 
   override val factory: AggregateRootFactory = {
     case ReservationCreated(_, clientId) =>

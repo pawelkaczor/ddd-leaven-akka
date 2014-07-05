@@ -29,14 +29,14 @@ abstract class AggregateRootActorFactory[A <: AggregateRoot[_]] extends Business
 }
 
 trait AggregateRoot[S <: AggregateState]
-  extends BusinessEntity with GracefulPassivation with EventsourcedProcessor with EventHandler with ActorLogging {
+  extends BusinessEntity with GracefulPassivation with PersistentActor with EventHandler with ActorLogging {
 
   type AggregateRootFactory = PartialFunction[Event, S]
   private var stateOpt: Option[S] = None
   private var _lastCommandMessage: Option[CommandMessage] = None
   val factory: AggregateRootFactory
 
-  override def processorId: String = id
+  override def persistenceId: String = id
   override def id = self.path.name
 
   override def receiveCommand: Receive = {
