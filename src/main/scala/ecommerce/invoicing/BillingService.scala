@@ -28,8 +28,6 @@ object BillingService {
 // Dummy implementation 
 class BillingService(orderTopic: ActorRef) extends Actor with ActorLogging {
 
-  lazy val channel = context.actorOf(PersistentChannel.props(), name = "publishChannel")
-
   override def receive: Receive = {
     case BillCustomer(customerId, orderId) =>
       billCustomer(customerId, orderId)
@@ -38,7 +36,7 @@ class BillingService(orderTopic: ActorRef) extends Actor with ActorLogging {
   }
 
   def publish(entityId: EntityId, event: DomainEvent): Unit = {
-    channel ! Deliver(Persistent(toEventMessage(entityId, event)), orderTopic.path)
+    orderTopic ! toEventMessage(entityId, event)
   }
 
   def toEventMessage(entityId: EntityId, event: DomainEvent) = {

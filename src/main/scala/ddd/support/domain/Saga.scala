@@ -1,7 +1,7 @@
 package ddd.support.domain
 
 import akka.actor.{ Props, ActorRef, ActorLogging }
-import akka.persistence.EventsourcedProcessor
+import akka.persistence.{ PersistentActor, EventsourcedProcessor }
 import ddd.support.domain.Saga.SagaState
 import ddd.support.domain.event.{ DomainEvent, EventMessage }
 import ddd.support.domain.protocol.Acknowledged
@@ -16,7 +16,7 @@ object Saga {
 }
 
 trait Saga[S <: SagaState] extends BusinessEntity
-  with GracefulPassivation with EventsourcedProcessor with ActorLogging {
+  with GracefulPassivation with PersistentActor with ActorLogging {
 
   def initialState: S
 
@@ -30,16 +30,15 @@ trait Saga[S <: SagaState] extends BusinessEntity
 
   def receiveEvent: Receive
 
-  override def processorId: String = sagaId
+  override def persistenceId: String = sagaId
 
   override def receiveCommand: Receive = {
     case em: EventMessage =>
       _lastEventMessage = Some(em)
-      receiveEvent.applyOrElse(em.event, unhandled)
+      receiveEvent.applyOrElse(em.event, unhandledEvent)
   }
 
-  override def unhandled(message: Any): Unit = {
-    super.unhandled(message)
+  def unhandledEvent(em: DomainEvent): Unit = {
     acknowledge(sender())
   }
 
