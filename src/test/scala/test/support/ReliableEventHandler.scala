@@ -1,8 +1,9 @@
 package test.support
 
-import akka.actor.{ Props, Actor }
-import akka.persistence.ConfirmablePersistent
+import akka.actor.{ Actor, Props }
 import ddd.support.domain.event.{ DomainEvent, DomainEventMessage }
+import ecommerce.system.DeliveryContext._
+import infrastructure.akka.SerializationSupportForActor
 
 object ReliableEventHandler {
 
@@ -13,12 +14,13 @@ object ReliableEventHandler {
   }
 }
 
-abstract class ReliableEventHandler extends Actor {
+abstract class ReliableEventHandler extends Actor with SerializationSupportForActor {
 
   override def receive: Receive = {
-    case p @ ConfirmablePersistent(em: DomainEventMessage, _, _) =>
+    case em: DomainEventMessage =>
       handle(em.event)
-      p.confirm()
+      em.confirmIfRequested()
+
   }
 
   def handle(event: DomainEvent)

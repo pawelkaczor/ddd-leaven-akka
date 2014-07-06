@@ -1,16 +1,18 @@
 package ecommerce
 
-import test.support.{DummyAggregateRoot, ReliableEventHandler, EventsourcedAggregateRootSpec}
+import akka.persistence.AtLeastOnceDelivery.UnconfirmedDelivery
+import test.support.{ DummyAggregateRoot, ReliableEventHandler, EventsourcedAggregateRootSpec }
 import test.support.TestConfig._
-import ddd.support.domain.event.DomainEvent
+import ddd.support.domain.event.{ EventMessage, DomainEvent }
 import org.mockito.Matchers.isA
 import org.mockito.BDDMockito.given
 import akka.actor.Props
-import infrastructure.akka.event.{RedeliveryFailedException, ReliablePublisher}
+import infrastructure.akka.event.ReliablePublisher
+import scala.collection.immutable.Seq
 import scala.concurrent.duration._
 import ddd.support.domain.protocol.Acknowledged
 import org.mockito.Mockito
-import test.support.DummyAggregateRoot.{Created, Create}
+import test.support.DummyAggregateRoot.{ Created, Create }
 import ddd.support.domain.command.CommandMessage
 import org.mockito.stubbing.Answer
 import org.mockito.invocation.InvocationOnMock
@@ -38,8 +40,12 @@ class ReliablePublisherSpec extends EventsourcedAggregateRootSpec[DummyAggregate
 
       val aggregateRoot = system.actorOf(Props(new DummyAggregateRoot with ReliablePublisher {
         override val target = reliableDestination.path
-        override val redeliverInterval = 500.millis
-        override val redeliverMax = 2
+        override def redeliverInterval = 500.millis
+        override def warnAfterNumberOfUnconfirmedAttempts = 2
+
+        override def receiveUnconfirmedDeliveries(deliveries: Seq[UnconfirmedDelivery]): Unit = {
+          system.eventStream.publish(deliveries(0))
+        }
       }))
 
       // when
@@ -47,7 +53,9 @@ class ReliablePublisherSpec extends EventsourcedAggregateRootSpec[DummyAggregate
 
       // then
       expectReply(Acknowledged)
-      expectExceptionLogged[RedeliveryFailedException]()
+      expectEventPublishedMatching[UnconfirmedDelivery] {
+        case UnconfirmedDelivery(_, _, EventMessage(_, Created("dummy"))) => true
+      }
       expectEventPublished[Created]
     }
   }

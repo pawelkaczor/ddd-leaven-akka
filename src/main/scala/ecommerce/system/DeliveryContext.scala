@@ -1,10 +1,10 @@
 package ecommerce.system
 
 import _root_.infrastructure.akka.SerializationSupport
-import akka.actor.{ ActorRef, ActorSystem }
+import akka.actor.{ Actor, ActorRef, ActorSystem }
 import ddd.support.domain.Message
 import ddd.support.domain.command.{ Command, CommandMessage }
-import ddd.support.domain.protocol.Receipt
+import ddd.support.domain.protocol.{ Confirm, Receipt }
 
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
@@ -12,8 +12,10 @@ import scala.reflect.ClassTag
 object DeliveryContext {
 
   case object ReceiptsRequested
-  case object ReceiptRequester
-  case object ReceiptMsg
+
+  type ReceiptRequested = (Class[_], Array[Byte])
+
+  case object DeliveryId
 
   object Adjust {
 
@@ -25,17 +27,20 @@ object DeliveryContext {
 
     case class Confirmable(msg: Message)(implicit _system: ActorSystem) extends ReadonlyConfirmable(msg) {
 
-      def withReceiptRequester(requester: ActorRef) = {
-        msg.withMetaAttribute(ReceiptRequester, serialize(requester))
+      /**
+       * request ddd.support.domain.protocol.Confirm
+       */
+      def requestConfirmation(deliveryId: Long)(implicit requester: ActorRef) = {
+        requestDLR[Confirm].withMetaAttribute(DeliveryId, deliveryId)
       }
 
       /**
        * dlr - delivery receipt
        */
-      def requestDLR[A](implicit t: ClassTag[A]) = {
+      def requestDLR[A](implicit t: ClassTag[A], requester: ActorRef) = {
         msg.withMetaAttribute(ReceiptsRequested,
-          msg.tryGetMetaAttribute[Set[Class[_]]](ReceiptsRequested)
-            .getOrElse(Set[Class[_]]()).+(t.runtimeClass))
+          msg.tryGetMetaAttribute[Set[ReceiptRequested]](ReceiptsRequested).getOrElse(Set[ReceiptRequested]())
+            .+((t.runtimeClass, serialize(requester))))
       }
     }
 
@@ -53,18 +58,24 @@ object DeliveryContext {
       srcMsg.hasMetaAttribute(ReceiptsRequested)
     }
 
-    def receiptRequested(receipt: Receipt): Boolean = {
-      srcMsg.tryGetMetaAttribute[Set[Class[_]]](ReceiptsRequested)
-        .exists(_.contains(receipt.getClass))
+    def receiptRequester(receipt: Receipt): Option[ActorRef] = {
+      srcMsg.tryGetMetaAttribute[Set[ReceiptRequested]](ReceiptsRequested)
+        .flatMap(_.find(rr => rr._1.equals(receipt.getClass)).map(rr => deserialize[ActorRef](rr._2)))
     }
-
-    def receiptRequester: ActorRef = deserialize(srcMsg.getMetaAttribute(ReceiptRequester))
 
     def sendReceiptIfRequested(receipt: Receipt): Unit = {
-      if (receiptRequested(receipt)) {
-        receiptRequester ! receipt
+      receiptRequester(receipt).foreach(_ ! receipt)
+    }
+
+    /**
+     * Send ddd.support.domain.protocol.Confirm to requester
+     */
+    def confirmIfRequested(): Unit = {
+      if (srcMsg.hasMetaAttribute(DeliveryId)) {
+        sendReceiptIfRequested(Confirm(srcMsg.getMetaAttribute[Long](DeliveryId)))
       }
     }
+
   }
 
 }

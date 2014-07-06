@@ -1,73 +1,57 @@
 package infrastructure.akka.event
 
 import akka.actor._
+import akka.persistence.AtLeastOnceDelivery.{ UnconfirmedDelivery, UnconfirmedWarning }
 import akka.persistence._
 import ddd.support.domain.AggregateRoot
-import scala.concurrent.duration._
-import ddd.support.domain.event.{ EventMessage, EventPublisher, DomainEventMessage }
-import akka.persistence.RedeliverFailure
-import scala.Some
-import akka.actor.SupervisorStrategy.Escalate
+import ddd.support.domain.event.{ DomainEventMessage, EventMessage, EventPublisher }
+import ddd.support.domain.protocol.Confirm
+import infrastructure.akka.event.ReliablePublisher.Confirmed
 
-trait ReliablePublisher extends PersistentActor with EventPublisher {
+import scala.collection.immutable.Seq
+import scala.concurrent.duration._
+
+object ReliablePublisher {
+  case class Confirmed(deliveryId: Long)
+}
+
+trait ReliablePublisher extends PersistentActor with EventPublisher with AtLeastOnceDelivery {
   this: AggregateRoot[_] =>
 
   implicit def system = context.system
 
-  override val supervisorStrategy =
-    OneForOneStrategy() {
-      case _: RedeliveryFailedException => Escalate
-      case t =>
-        super.supervisorStrategy.decider.applyOrElse(t, (_: Any) => Escalate)
-    }
-
-  class RedeliverFailureListener extends Actor with ActorLogging {
-    def receive = {
-      case RedeliverFailure(messages) =>
-        throw new RedeliveryFailedException(messages.head.payload.asInstanceOf[DomainEventMessage])
-    }
-  }
-
   def target: ActorPath
 
-  val redeliverInterval = 30.seconds
-  val redeliverMax = 15
-  var channel: ActorRef = _
+  override def redeliverInterval = 30.seconds
+  override def warnAfterNumberOfUnconfirmedAttempts = 15
 
-  override def preStart() {
-    val listener = context.actorOf(Props(new RedeliverFailureListener))
-    channel = context.actorOf(
-      Channel.props(ChannelSettings(redeliverMax, redeliverInterval, Some(listener))),
-      name = "publishChannel")
-    super.preStart()
-  }
-
-  override def publish(event: DomainEventMessage) {
+  override def publish(em: DomainEventMessage) {
     import ecommerce.system.DeliveryContext.Adjust._
-    if (event.anyReceiptRequested && !recoveryRunning) {
-      event.withReceiptRequester(sender())
-    }
-    channel ! Deliver(Persistent(event), target)
+    deliver(target, deliveryId => em.requestConfirmation(deliveryId))
   }
 
   abstract override def receiveRecover: Receive = {
     case event: EventMessage =>
       super.receiveRecover(event)
       publish(toDomainEventMessage(event))
+
+    case Confirmed(deliveryId) =>
+      confirmDelivery(deliveryId)
   }
 
-  override def preRestart(reason: Throwable, message: Option[Any]) {
-    reason match {
-      case (RedeliveryFailedException(event)) =>
-        // TODO it should be possible define compensation action that will be triggered from here
-        // If compensation applied, event should be marked as deleted (thus no redelivery after restarting):
-        // deleteMessage(message.get.asInstanceOf[Persistent].sequenceNr, permanent = false)
-
-        // omit AggregateRoot#preRestart
-        super[PersistentActor].preRestart(reason, message)
-      case _ =>
-        super.preRestart(reason, message)
-    }
+  abstract override def receiveCommand: Receive = {
+    case Confirm(deliveryId) =>
+      persist(Confirmed(deliveryId)) {
+        _ => confirmDelivery(deliveryId)
+      }
+    case UnconfirmedWarning(unconfirmedDeliveries) =>
+      receiveUnconfirmedDeliveries(unconfirmedDeliveries)
+    case c => super.receiveCommand(c)
   }
 
+  def receiveUnconfirmedDeliveries(deliveries: Seq[UnconfirmedDelivery]): Unit = {
+    // TODO it should be possible define compensation action that will be triggered from here
+    // If compensation applied, unconfirmed deliveries should be confirmed: 
+    //unconfirmedDeliveries.foreach(ud => confirmDelivery(ud.deliveryId))
+  }
 }

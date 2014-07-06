@@ -39,6 +39,13 @@ abstract class EventsourcedAggregateRootSpec[A](_system: ActorSystem)(implicit a
     system.awaitTermination()
   }
 
+  def expectEventPublishedMatching[E](matcher: PartialFunction[Any, Boolean])(implicit t: ClassTag[E]) {
+    val probe = TestProbe()
+    system.eventStream.subscribe(probe.ref, t.runtimeClass)
+    assert(probe.expectMsgPF[Boolean](10 seconds)(matcher), s"unexpected event")
+
+  }
+
   def expectEventPublished[E](implicit t: ClassTag[E]) {
     val probe = TestProbe()
     system.eventStream.subscribe(probe.ref, t.runtimeClass)
