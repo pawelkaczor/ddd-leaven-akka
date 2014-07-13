@@ -1,11 +1,11 @@
 package ddd.support.domain
 
-import akka.actor.{ Props, ActorRef, ActorLogging }
-import akka.persistence.{ PersistentActor, EventsourcedProcessor }
+import akka.actor.{ ActorLogging, ActorRef, Props }
+import akka.persistence.PersistentActor
 import ddd.support.domain.Saga.SagaState
 import ddd.support.domain.event.{ DomainEvent, EventMessage }
 import ddd.support.domain.protocol.Acknowledged
-import infrastructure.actor.{ PassivationConfig, GracefulPassivation }
+import infrastructure.actor.{ GracefulPassivation, PassivationConfig }
 
 object Saga {
   trait SagaState {

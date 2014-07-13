@@ -1,6 +1,6 @@
 package ecommerce.system.infrastructure.process
 
-import akka.actor.ActorRef
+import akka.actor.{ ActorSystem, ActorRef }
 import ddd.support.domain.event.DomainEvent
 import ddd.support.domain._
 import ecommerce.system.infrastructure.events.ForwardingConsumer
@@ -12,14 +12,15 @@ object SagaSupport {
 
   type ExchangeSubscriptions[A <: Saga[_]] = Map[ExchangeName, Array[Class[_ <: DomainEvent]]]
 
-  def registerSaga[A <: Saga[_]](implicit es: ExchangeSubscriptions[A], factory: OfficeFactory[A], caseIdResolution: IdResolution[A] = new EntityIdResolution[A],
-    sagaActorFactory: BusinessEntityActorFactory[A], cs: CreationSupport): ActorRef = {
+  implicit def defaultCaseIdResolution[A <: Saga[_]]() = new EntityIdResolution[A]
+
+  def registerSaga[A <: Saga[_] : ExchangeSubscriptions : OfficeFactory : BusinessEntityActorFactory](implicit system: ActorSystem, creator: CreationSupport, caseIdResolution: IdResolution[A] = new EntityIdResolution[A]): ActorRef = {
     val sagaOffice = Office.office[A]
-    registerEventListeners(sagaOffice, es)
+    registerEventListeners(sagaOffice)
     sagaOffice
   }
 
-  private def registerEventListeners(sagaOffice: ActorRef, es: ExchangeSubscriptions[_])(implicit cs: CreationSupport) {
+  private def registerEventListeners[A <: Saga[_]](sagaOffice: ActorRef)(implicit es: ExchangeSubscriptions[_], creator: CreationSupport) {
     for ((exchangeName, events) <- es) {
       ForwardingConsumer(exchangeName, sagaOffice)
     }

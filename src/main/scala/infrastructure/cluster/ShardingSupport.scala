@@ -10,43 +10,40 @@ import infrastructure.actor.PassivationConfig
 import scala.reflect.ClassTag
 
 object ShardingSupport {
-  implicit def globalOfficeFactory[A <: BusinessEntity](implicit ct: ClassTag[A], system: ActorSystem): OfficeFactory[A] = {
+
+  implicit def globalOfficeFactory[A <: BusinessEntity : ShardResolution : BusinessEntityActorFactory : ClassTag](implicit system: ActorSystem): OfficeFactory[A] = {
     new OfficeFactory[A] {
       private def region: Option[ActorRef] = {
         try {
-          Some(ClusterSharding(system).shardRegion(officeName(ct)))
+          Some(ClusterSharding(system).shardRegion(officeName))
         } catch {
           case ex: IllegalArgumentException => None
         }
       }
-      override def getOrCreate(caseIdResolution: IdResolution[A], clerkFactory: BusinessEntityActorFactory[A]): ActorRef = {
+      override def getOrCreate(implicit caseIdResolution: IdResolution[A]): ActorRef = {
         implicit val sr: ShardResolution[A] = caseIdResolution.asInstanceOf[ShardResolution[A]]
         region.getOrElse {
-          startSharding[A](ct, sr, system, clerkFactory)
+          startSharding()
           region.get
         }
       }
+
+      private def startSharding(): Unit = {
+        val entityFactory = implicitly[BusinessEntityActorFactory[A]]
+        val entityProps = entityFactory.props(new PassivationConfig(Passivate(PoisonPill), entityFactory.inactivityTimeout))
+        val entityClass = implicitly[ClassTag[A]].runtimeClass.asInstanceOf[Class[A]]
+        val sr = implicitly[ShardResolution[A]]
+
+        ClusterSharding(system).start(
+          typeName = entityClass.getSimpleName,
+          entryProps = Some(entityProps),
+          idExtractor = sr.idExtractor,
+          shardResolver = sr.shardResolver)
+
+      }
+
     }
-  }
 
-  def startSharding[A <: BusinessEntity](implicit ct: ClassTag[A], sr: ShardResolution[A],
-    system: ActorSystem, actorFactory: BusinessEntityActorFactory[A]) {
-    startSharding(sr)
-  }
-
-  def startSharding[A <: BusinessEntity](sr: ShardResolution[A])(implicit ct: ClassTag[A], system: ActorSystem, entFactory: BusinessEntityActorFactory[A]) {
-    val entityProps = entFactory.props(new PassivationConfig(Passivate(PoisonPill), entFactory.inactivityTimeout))
-    startSharding[A](sr, entityProps)
-  }
-
-  def startSharding[A](sr: ShardResolution[A], entryProps: Props)(implicit ct: ClassTag[A], system: ActorSystem) {
-    val shardedClass = ct.runtimeClass.asInstanceOf[Class[A]]
-
-    ClusterSharding(system).start(
-      typeName = shardedClass.getSimpleName,
-      entryProps = Some(entryProps),
-      idExtractor = sr.idExtractor,
-      shardResolver = sr.shardResolver)
   }
 
 }

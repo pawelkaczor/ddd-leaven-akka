@@ -8,6 +8,7 @@ import akka.persistence.journal.leveldb.{ SharedLeveldbStore, SharedLeveldbJourn
 import akka.persistence.Persistence
 import akka.remote.testconductor.RoleName
 import akka.cluster.Cluster
+import infrastructure.cluster.DefaultShardResolution
 import org.apache.commons.io.FileUtils
 import scala.reflect.ClassTag
 import scala.concurrent.duration._
@@ -18,6 +19,8 @@ abstract class ClusterSpec extends MultiNodeSpec(ClusterConfig)
   import ClusterConfig._
 
   implicit val logger = system.log
+
+  implicit def defaultShardResolution[A] = new DefaultShardResolution[A]
 
   def initialParticipants = roles.size
 
