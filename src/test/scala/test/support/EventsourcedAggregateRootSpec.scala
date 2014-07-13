@@ -1,18 +1,17 @@
 package test.support
 
 import akka.actor._
-import akka.testkit.{ TestProbe, EventFilter, ImplicitSender, TestKit }
+import akka.testkit.{ EventFilter, ImplicitSender, TestKit, TestProbe }
 import akka.util.Timeout
-import infrastructure.actor.CreationSupport
-import org.scalatest.{ BeforeAndAfter, BeforeAndAfterAll, Matchers, WordSpecLike }
-import scala.concurrent.{ Future, Await }
-import scala.concurrent.duration._
-import scala.reflect.ClassTag
-import ddd.support.domain.AggregateIdResolution
-import scala.util.Failure
-import akka.actor.Terminated
 import infrastructure.EcommerceSettings
+import infrastructure.actor.CreationSupport
 import org.scalatest.mock.MockitoSugar
+import org.scalatest.{ BeforeAndAfter, BeforeAndAfterAll, Matchers, WordSpecLike }
+
+import scala.concurrent.duration._
+import scala.concurrent.{ Await, Future }
+import scala.reflect.ClassTag
+import scala.util.Failure
 
 abstract class EventsourcedAggregateRootSpec[A](_system: ActorSystem)(implicit arClassTag: ClassTag[A])
   extends TestKit(_system)
@@ -52,15 +51,15 @@ abstract class EventsourcedAggregateRootSpec[A](_system: ActorSystem)(implicit a
     probe.expectMsgClass(10 seconds, t.runtimeClass)
   }
 
-  def expectEventPersisted[E](aggregateId: String)(when: => Unit)(implicit t: ClassTag[E], idResolution: AggregateIdResolution[A] = new AggregateIdResolution[A]) {
+  def expectEventPersisted[E](aggregateId: String)(when: => Unit)(implicit t: ClassTag[E]) {
     expectLogMessageFromAR("Event persisted: " + t.runtimeClass.getSimpleName, when)(aggregateId)
   }
 
-  def expectEventPersisted[E](event: E)(aggregateRootId: String)(when: => Unit)(implicit idResolution: AggregateIdResolution[A] = new AggregateIdResolution[A]) {
+  def expectEventPersisted[E](event: E)(aggregateRootId: String)(when: => Unit) {
     expectLogMessageFromAR("Event persisted: " + event.toString, when)(aggregateRootId)
   }
 
-  def expectLogMessageFromAR(messageStart: String, when: => Unit)(aggregateId: String)(implicit idResolution: AggregateIdResolution[A] = new AggregateIdResolution[A]) {
+  def expectLogMessageFromAR(messageStart: String, when: => Unit)(aggregateId: String) {
     EventFilter.info(
       source = s"akka://Tests/user/$domain/$aggregateId",
       start = messageStart, occurrences = 1)
@@ -75,7 +74,7 @@ abstract class EventsourcedAggregateRootSpec[A](_system: ActorSystem)(implicit a
     }
   }
 
-  def expectLogMessageFromOffice(messageStart: String)(when: => Unit)(implicit idResolution: AggregateIdResolution[A] = new AggregateIdResolution[A]) {
+  def expectLogMessageFromOffice(messageStart: String)(when: => Unit) {
     EventFilter.info(
       source = s"akka://Tests/user/$domain",
       start = messageStart, occurrences = 1)
