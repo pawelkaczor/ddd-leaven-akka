@@ -14,7 +14,7 @@ object SagaSupport {
 
   implicit def defaultCaseIdResolution[A <: Saga[_]]() = new EntityIdResolution[A]
 
-  def registerSaga[A <: Saga[_] : ExchangeSubscriptions : OfficeFactory : BusinessEntityActorFactory](implicit system: ActorSystem, creator: CreationSupport, caseIdResolution: IdResolution[A] = new EntityIdResolution[A]): ActorRef = {
+  def registerSaga[A <: Saga[_] : ExchangeSubscriptions : IdResolution : OfficeFactory : BusinessEntityActorFactory](implicit system: ActorSystem, creator: CreationSupport): ActorRef = {
     val sagaOffice = Office.office[A]
     registerEventListeners(sagaOffice)
     sagaOffice

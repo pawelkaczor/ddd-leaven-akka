@@ -3,6 +3,8 @@ package test.support
 import akka.actor._
 import akka.testkit.{ EventFilter, ImplicitSender, TestKit, TestProbe }
 import akka.util.Timeout
+import ddd.support.domain.{ AggregateIdResolution, IdResolution, BusinessEntityActorFactory, BusinessEntity }
+import ecommerce.system.infrastructure.office.{ Office, OfficeFactory }
 import infrastructure.EcommerceSettings
 import infrastructure.actor.CreationSupport
 import org.scalatest.mock.MockitoSugar
@@ -32,6 +34,8 @@ abstract class EventsourcedAggregateRootSpec[A](_system: ActorSystem)(implicit a
       }
     }
   }
+
+  implicit def defaultCaseIdResolution[A] = new AggregateIdResolution[A]
 
   override def afterAll() {
     TestKit.shutdownActorSystem(system)

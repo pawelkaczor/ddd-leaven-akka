@@ -20,8 +20,7 @@ object ShardingSupport {
           case ex: IllegalArgumentException => None
         }
       }
-      override def getOrCreate(implicit caseIdResolution: IdResolution[A]): ActorRef = {
-        implicit val sr: ShardResolution[A] = caseIdResolution.asInstanceOf[ShardResolution[A]]
+      override def getOrCreate: ActorRef = {
         region.getOrElse {
           startSharding()
           region.get
