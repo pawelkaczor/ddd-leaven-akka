@@ -23,6 +23,3 @@ http://typesafe.com/platform
 specifically:
 http://doc.akka.io/docs/akka/snapshot/scala/persistence.html
 
-
-### Installation notes
-As of writing time, https://github.com/michaelpisula/akka-journal-inmemory is not available in public maven repository. It needs to be installed manually.
