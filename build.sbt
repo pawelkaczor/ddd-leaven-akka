@@ -28,7 +28,7 @@ val project = Project(
       "com.h2database" % "h2" % "1.3.170",
       "pl.project13.scala" %% "rainbow" % "0.2" exclude("org.scalatest", "scalatest_2.11"),
       "com.typesafe.akka" %% "akka-multi-node-testkit" % akkaVersion,
-      "com.github.michaelpisula" %% "akka-persistence-inmemory" % "0.1-SNAPSHOT",
+      "com.github.michaelpisula" %% "akka-persistence-inmemory" % "0.1.2",
       "commons-io" % "commons-io" % "2.4" % "test"),
     // make sure that MultiJvm test are compiled by the default test compilation
     compile in MultiJvm <<= (compile in MultiJvm) triggeredBy (compile in Test),
