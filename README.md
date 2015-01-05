@@ -1,7 +1,7 @@
 ddd-leaven-akka
 ===============
 
-**See also follow-up project:** https://github.com/pawelkaczor/akka-ddd
+**See also follow-up project:** [ddd-leaven-akka-v2](https://github.com/pawelkaczor/ddd-leaven-akka-v2)
 
 ## Goal
 Learn how to apply DDD/CQRS concepts on top of reactive platform.
